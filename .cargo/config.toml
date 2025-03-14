@@ -1,0 +1,8 @@
+[env]
+RUBY = { value = "ruby/pfx/bin/ruby", relative = true }
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+  "-C",
+  "link-arg=-Wl,-rpath,/home/melody/hackerland/sapphire/ruby/pfx/lib/",
+]

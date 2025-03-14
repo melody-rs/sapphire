@@ -1,0 +1,30 @@
+[package]
+name = "rgss"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+wgpu.workspace = true
+winit.workspace = true
+gilrs.workspace = true
+
+glyphon.workspace = true
+image.workspace = true
+
+kira.workspace = true
+
+camino.workspace = true
+
+crossbeam.workspace = true
+parking_lot.workspace = true
+
+bytemuck.workspace = true
+
+slotmap.workspace = true
+glam = { version = "0.30.0", features = ["bytemuck"] }
+
+thiserror.workspace = true
+itertools = "0.14.0"
+
+num_enum = "0.7.3"
+strum.workspace = true

@@ -1,0 +1,33 @@
+[package]
+name = "binding-magnus"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+magnus = { version = "0.7.1", features = ["embed", "rb-sys"] }
+rb-sys = "0.9.111"
+
+rgss = { path = "../rgss", version = "*" }
+
+alox-48 = { version = "0.6.0", default-features = false }
+flate2 = { version = "1.1.0" }
+
+parking_lot.workspace = true
+crossbeam.workspace = true
+
+bytemuck.workspace = true
+
+winit.workspace = true
+image.workspace = true
+
+whoami = "1.5.2"
+dirs = "6.0.0"
+log = "0.4.26"
+convert_case = "0.8.0"
+
+strum.workspace = true
+
+rfd.workspace = true
+
+[features]
+ruby-static = ["rb-sys/ruby-static"]

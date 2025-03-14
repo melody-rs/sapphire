@@ -1,0 +1,30 @@
+[package]
+name = "sapphire"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rgss = { path = "../rgss", version = "*" }
+binding-magnus = { version = "*", path = "../binding-magnus", optional = true }
+
+parking_lot = { version = "0.12.3", optional = true }
+
+winit.workspace = true
+pollster = "0.4.0"
+env_logger = "0.11.6"
+color-backtrace = "0.7.0"
+
+rfd.workspace = true
+
+crossbeam.workspace = true
+
+futures-util = { version = "0.3.31", features = [
+  "io",
+] } # https://github.com/bilelmoussaoui/ashpd/issues/264
+
+
+[features]
+default = ["ruby"]
+ruby = ["binding-magnus"]
+
+deadlock_detection = ["parking_lot", "parking_lot/deadlock_detection"]
