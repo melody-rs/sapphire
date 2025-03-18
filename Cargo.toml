@@ -25,3 +25,5 @@ bytemuck = { version = "1.22.0", features = ["derive"] }
 strum = { version = "0.27.1", features = ["derive"] }
 
 rfd = "0.15.2"
+
+serde = { version = "1.0.219", features = ["derive"] }

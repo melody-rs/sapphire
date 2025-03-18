@@ -28,3 +28,5 @@ itertools = "0.14.0"
 
 num_enum = "0.7.3"
 strum.workspace = true
+
+serde.workspace = true

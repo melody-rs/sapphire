@@ -3,6 +3,12 @@ use pollster::FutureExt;
 fn main() {
     env_logger::init();
 
+    let config: rgss::Config = std::fs::read_to_string("sapphire_config.toml")
+        .ok()
+        // we use expect() so we exit if the config file was invalid
+        .map(|config_text| toml::from_str(&config_text).expect("failed to read config file"))
+        .unwrap_or_default();
+
     let printer = color_backtrace::BacktracePrinter::new()
         .lib_verbosity(color_backtrace::Verbosity::Full) // because we have a custom panic handler we use lib_verbosity instead (is weird)
         .message("Sapphire has encountered a fatal error!");
@@ -25,7 +31,9 @@ fn main() {
             .set_level(rfd::MessageLevel::Error)
             .set_description(truncated)
             .show();
-        std::process::abort();
+        if config.behaviour.abort_on_panic {
+            std::process::abort();
+        }
     }));
 
     #[cfg(feature = "deadlock_detection")]
@@ -52,7 +60,7 @@ fn main() {
         })
         .expect("failed to spawn deadlock thread");
 
-    std::env::set_current_dir("/mnt/hdd/Git/OSFM-GitHub").unwrap();
+    std::env::set_current_dir(config.fs.game_dir).unwrap();
 
     let (event_loop, events) = rgss::EventLoop::new().unwrap();
 

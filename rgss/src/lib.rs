@@ -20,6 +20,9 @@ mod data;
 pub use data::{Color, Rect, Table, Tone};
 use slotmap::{SlotMap, new_key_type};
 
+mod config;
+pub use config::Config;
+
 // Arenas is a workaround for garbage collection, and to keep everything in one convenient place.
 // rgss is dependent on global state, which is one of the main reasons we need this struct.
 // when rendering, we have to traverse the viewport tree which means looking at *every* single sprite

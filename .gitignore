@@ -1,3 +1,5 @@
 target/
 ruby/ruby-build/
 ruby/pfx/
+
+sapphire_config.toml

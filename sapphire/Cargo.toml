@@ -22,6 +22,8 @@ futures-util = { version = "0.3.31", features = [
   "io",
 ] } # https://github.com/bilelmoussaoui/ashpd/issues/264
 
+toml = "0.8.20"
+
 
 [features]
 default = ["ruby"]

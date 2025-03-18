@@ -1,0 +1,13 @@
+[fs]
+# Controls the game directory sapphire will run in and read files from
+game_dir = "."
+[behaviour]
+# Abort if sapphire has a fatal exception (panic)
+abort_on_panic = true
+[graphics]
+# Sapphire has optimizations based on your hardware.
+# For example, if your GPU supports binding arrays, Sapphire will store all Bitmaps in them.
+# Setting this to `true` will disable those optimizations.
+force_downlevel = false
+# Enables vsync.
+vsync = true
