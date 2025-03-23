@@ -60,7 +60,7 @@ fn main() {
         })
         .expect("failed to spawn deadlock thread");
 
-    std::env::set_current_dir(config.fs.game_dir).unwrap();
+    std::env::set_current_dir(&config.fs.game_dir).unwrap();
 
     let (event_loop, events) = rgss::EventLoop::new().unwrap();
 
@@ -81,7 +81,9 @@ fn main() {
 
         let mut arenas = rgss::Arenas::default();
 
-        let graphics = rgss::Graphics::new(window, &mut arenas).block_on().unwrap();
+        let graphics = rgss::Graphics::new(window, &config, &mut arenas)
+            .block_on()
+            .unwrap();
         let fonts = rgss::Fonts::new(&graphics, &mut arenas);
 
         let ctx = rgss::Ctx {

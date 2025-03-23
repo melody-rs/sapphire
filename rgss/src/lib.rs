@@ -2,7 +2,7 @@ mod event_loop;
 pub use event_loop::{EventLoop, Events};
 
 mod graphics;
-pub use graphics::{Bitmap, Drawable, Graphics, Viewport, Window};
+pub use graphics::{Bitmap, Drawable, Graphics, Sprite, Viewport, Window};
 
 mod input;
 pub use input::{Input, KeyCode};
@@ -44,6 +44,7 @@ pub struct Arenas {
     pub bitmaps: SlotMap<BitmapKey, Bitmap>,
     pub viewports: SlotMap<ViewportKey, Viewport>,
     pub windows: SlotMap<WindowKey, Window>,
+    pub sprites: SlotMap<SpriteKey, Sprite>,
 }
 
 new_key_type! {
@@ -55,6 +56,7 @@ new_key_type! {
     pub struct BitmapKey;
     pub struct ViewportKey;
     pub struct WindowKey;
+    pub struct SpriteKey;
 }
 
 pub struct Ctx {

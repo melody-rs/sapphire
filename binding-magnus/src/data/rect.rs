@@ -1,4 +1,4 @@
-use magnus::{Class, Module, Object, RString, Value, function, method};
+use magnus::{Class, Module, Value, method};
 use std::cell::Cell;
 
 use crate::arenas;
@@ -43,12 +43,33 @@ impl Rect {
 
         Ok(())
     }
+
+    fn set(&self, x: i32, y: i32, width: u32, height: u32) {
+        let mut arenas = arenas::get().write();
+        let rect = &mut arenas.rects[self.0.get()];
+        *rect = rgss::Rect {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+
+    fn empty(&self) {
+        let mut arenas = arenas::get().write();
+        let rect = &mut arenas.rects[self.0.get()];
+        *rect = rgss::Rect::default();
+    }
 }
 
 pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
     let class = ruby.define_class("Rect", ruby.class_object())?;
     class.define_alloc_func::<Rect>();
     class.define_method("initialize", method!(Rect::initialize, -1))?;
+
+    class.define_method("set", method!(Rect::set, 4))?;
+
+    class.define_method("empty", method!(Rect::empty, 0))?;
 
     Ok(())
 }

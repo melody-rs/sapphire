@@ -21,10 +21,13 @@ pub use viewport::Viewport;
 mod window;
 pub use window::Window;
 
+mod sprite;
+pub use sprite::Sprite;
+
 mod z;
 pub use z::{Drawable, Z, ZList};
 
-use crate::{Arenas, ViewportKey};
+use crate::{Arenas, Config, ViewportKey};
 
 pub struct Graphics {
     pub(crate) wgpu: Wgpu,
@@ -41,6 +44,9 @@ pub(crate) struct Wgpu {
     pub(crate) queue: wgpu::Queue,
     pub(crate) surface: wgpu::Surface<'static>,
     pub(crate) surface_config: wgpu::SurfaceConfiguration,
+
+    pub(crate) features: wgpu::Features,
+    pub(crate) limits: wgpu::Limits,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -54,8 +60,12 @@ pub enum InitError {
 }
 
 impl Graphics {
-    pub async fn new(window: Arc<NativeWindow>, arenas: &mut Arenas) -> Result<Self, InitError> {
-        let wgpu = Wgpu::new(window.clone()).await?;
+    pub async fn new(
+        window: Arc<NativeWindow>,
+        config: &Config,
+        arenas: &mut Arenas,
+    ) -> Result<Self, InitError> {
+        let wgpu = Wgpu::new(window.clone(), config).await?;
         let viewport = Viewport::global(arenas);
         let global_viewport = arenas.viewports.insert(viewport);
         Ok(Self {
@@ -71,7 +81,16 @@ impl Graphics {
 }
 
 impl Wgpu {
-    pub async fn new(window: Arc<NativeWindow>) -> Result<Self, InitError> {
+    pub const fn bindless_features() -> wgpu::Features {
+        wgpu::Features::TEXTURE_BINDING_ARRAY
+            .union(wgpu::Features::MULTI_DRAW_INDIRECT)
+            .union(wgpu::Features::PARTIALLY_BOUND_BINDING_ARRAY)
+    }
+    pub const fn multi_draw_features() -> wgpu::Features {
+        wgpu::Features::MULTI_DRAW_INDIRECT.union(wgpu::Features::INDIRECT_FIRST_INSTANCE)
+    }
+
+    pub async fn new(window: Arc<NativeWindow>, config: &Config) -> Result<Self, InitError> {
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::VULKAN,
             flags: wgpu::InstanceFlags::from_build_config(),
@@ -93,6 +112,28 @@ impl Wgpu {
                 .ok_or(InitError::NoAdapter)?,
         };
 
+        let needed_features = wgpu::Features::PUSH_CONSTANTS;
+        let optimization_features = wgpu::Features::CLEAR_TEXTURE
+            | wgpu::Features::PIPELINE_CACHE
+            | Self::bindless_features()
+            | Self::multi_draw_features();
+        let requested_features = needed_features | optimization_features;
+
+        let mut features = adapter.features().intersection(requested_features);
+        if config.graphics.force_downlevel {
+            features = wgpu::Features::default();
+        }
+
+        let adapter_limits = adapter.limits();
+        let mut limits = wgpu::Limits::default();
+        if features.contains(wgpu::Features::PUSH_CONSTANTS) {
+            limits.max_push_constant_size = adapter_limits.max_push_constant_size;
+        }
+        if features.contains(Self::bindless_features()) {
+            limits.max_sampled_textures_per_shader_stage =
+                adapter_limits.max_sampled_textures_per_shader_stage;
+        }
+
         let surface_config = surface
             .get_default_config(&adapter, 640, 480)
             .expect("surface incompatible with adapter?");
@@ -100,11 +141,8 @@ impl Wgpu {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    required_features: wgpu::Features::PUSH_CONSTANTS,
-                    required_limits: wgpu::Limits {
-                        max_push_constant_size: 128,
-                        ..Default::default()
-                    },
+                    required_features: features,
+                    required_limits: limits.clone(),
                     ..Default::default()
                 },
                 None,
@@ -120,6 +158,17 @@ impl Wgpu {
             queue,
             surface,
             surface_config,
+
+            features,
+            limits,
         })
+    }
+
+    pub fn bindless_supported(&self) -> bool {
+        self.features.contains(Self::bindless_features())
+    }
+
+    pub fn multi_draw_supported(&self) -> bool {
+        self.features.contains(Self::multi_draw_features())
     }
 }

@@ -1,3 +1,5 @@
+#![allow(clippy::derivable_impls)] // better to manually impl for clearer intent
+
 #[derive(serde::Deserialize, Default)]
 #[serde(default)]
 pub struct Config {

@@ -45,7 +45,7 @@ pub struct Tone {
     pub red: f64,
     pub blue: f64,
     pub green: f64,
-    pub grey: f64,
+    pub gray: f64,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]

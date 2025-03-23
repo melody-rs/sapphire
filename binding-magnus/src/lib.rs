@@ -1,3 +1,4 @@
+#![allow(unused_variables)] // temporarily for now
 use std::thread::JoinHandle;
 
 use magnus::{Class, error::ErrorType, function, value::ReprValue};

@@ -1,4 +1,4 @@
-use magnus::{Class, Module, Object, RString, Value, function, method};
+use magnus::{Class, Module, Object, RString, TryConvert, Value, function, method};
 use std::cell::Cell;
 
 use crate::arenas;
@@ -79,6 +79,50 @@ impl Table {
 
         string
     }
+
+    fn index(&self, args: &[Value]) -> magnus::error::Result<i16> {
+        magnus::scan_args::check_arity(args.len(), 1..=4)?;
+        let index = match *args {
+            [rb_x] => (TryConvert::try_convert(rb_x)?, 0, 0),
+            [rb_x, rb_y] => (
+                TryConvert::try_convert(rb_x)?,
+                TryConvert::try_convert(rb_y)?,
+                0,
+            ),
+            [rb_x, rb_y, rb_z] => (
+                TryConvert::try_convert(rb_x)?,
+                TryConvert::try_convert(rb_y)?,
+                TryConvert::try_convert(rb_z)?,
+            ),
+            _ => unreachable!(),
+        };
+
+        let arenas = arenas::get().read();
+        Ok(arenas.tables[self.0.get()][index])
+    }
+
+    fn index_set(&self, args: &[Value]) -> magnus::error::Result<()> {
+        magnus::scan_args::check_arity(args.len(), 2..=5)?;
+        let index = match *args {
+            [rb_x, _] => (TryConvert::try_convert(rb_x)?, 0, 0),
+            [rb_x, rb_y, _] => (
+                TryConvert::try_convert(rb_x)?,
+                TryConvert::try_convert(rb_y)?,
+                0,
+            ),
+            [rb_x, rb_y, rb_z, _] => (
+                TryConvert::try_convert(rb_x)?,
+                TryConvert::try_convert(rb_y)?,
+                TryConvert::try_convert(rb_z)?,
+            ),
+            _ => unreachable!(),
+        };
+        let value = args.last().copied().map(TryConvert::try_convert).unwrap()?;
+
+        let mut arenas = arenas::get().write();
+        arenas.tables[self.0.get()][index] = value;
+        Ok(())
+    }
 }
 
 pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
@@ -87,6 +131,9 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
     class.define_method("initialize", method!(Table::initialize, -1))?;
     class.define_singleton_method("_load", function!(Table::deserialize, 1))?;
     class.define_method("_dump_data", method!(Table::serialize, 0))?;
+
+    class.define_method("[]", method!(Table::index, -1))?;
+    class.define_method("[]=", method!(Table::index_set, -1))?;
 
     Ok(())
 }

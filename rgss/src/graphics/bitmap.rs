@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::{Arenas, FileSystem, FontKey, Fonts};
+use crate::FileSystem;
 
 use super::Graphics;
 
@@ -63,5 +63,13 @@ impl Bitmap {
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         Self { texture, view }
+    }
+
+    pub fn width(&self) -> u32 {
+        self.texture.width()
+    }
+
+    pub fn height(&self) -> u32 {
+        self.texture.height()
     }
 }

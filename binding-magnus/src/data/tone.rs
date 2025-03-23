@@ -36,13 +36,53 @@ impl Tone {
             red,
             blue,
             green,
-            grey: grey.unwrap_or(255.0),
+            gray: grey.unwrap_or(255.0),
         };
         let tone_key = arenas.tones.insert(tone);
 
         self.0.set(tone_key);
 
         Ok(())
+    }
+
+    fn red(&self) -> f64 {
+        let arenas = arenas::get().read();
+        arenas.tones[self.0.get()].red
+    }
+
+    fn set_red(&self, value: f64) {
+        let mut arenas = arenas::get().write();
+        arenas.tones[self.0.get()].red = value;
+    }
+
+    fn green(&self) -> f64 {
+        let arenas = arenas::get().read();
+        arenas.tones[self.0.get()].green
+    }
+
+    fn set_green(&self, value: f64) {
+        let mut arenas = arenas::get().write();
+        arenas.tones[self.0.get()].green = value;
+    }
+
+    fn blue(&self) -> f64 {
+        let arenas = arenas::get().read();
+        arenas.tones[self.0.get()].blue
+    }
+
+    fn set_blue(&self, value: f64) {
+        let mut arenas = arenas::get().write();
+        arenas.tones[self.0.get()].blue = value;
+    }
+
+    fn gray(&self) -> f64 {
+        let arenas = arenas::get().read();
+        arenas.tones[self.0.get()].gray
+    }
+
+    fn set_gray(&self, value: f64) {
+        let mut arenas = arenas::get().write();
+        arenas.tones[self.0.get()].gray = value;
     }
 
     fn deserialize(bytes: RString) -> Tone {
@@ -70,6 +110,16 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
     class.define_method("initialize", method!(Tone::initialize, -1))?;
     class.define_singleton_method("_load", function!(Tone::deserialize, 1))?;
     class.define_method("_dump_data", method!(Tone::serialize, 0))?;
+
+    class.define_method("red", method!(Tone::red, 0))?;
+    class.define_method("green", method!(Tone::green, 0))?;
+    class.define_method("blue", method!(Tone::blue, 0))?;
+    class.define_method("gray", method!(Tone::gray, 0))?;
+
+    class.define_method("red=", method!(Tone::set_red, 1))?;
+    class.define_method("green=", method!(Tone::set_green, 1))?;
+    class.define_method("blue=", method!(Tone::set_blue, 1))?;
+    class.define_method("gray=", method!(Tone::set_gray, 1))?;
 
     Ok(())
 }

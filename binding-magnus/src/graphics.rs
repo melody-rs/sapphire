@@ -5,11 +5,11 @@ use std::sync::OnceLock;
 mod bitmap;
 pub use bitmap::Bitmap as RbBitmap;
 
+mod plane;
 mod sprite;
+mod tilemap;
 mod viewport;
 pub use viewport::Viewport as RbViewport;
-
-use crate::input;
 
 mod window;
 
@@ -26,7 +26,7 @@ fn fullscreen() -> bool {
 fn set_fullscreen(fullscreen: bool) {}
 
 fn frame_rate() -> u16 {
-    0
+    60
 }
 
 fn set_frame_rate(framerate: u16) {}
@@ -66,6 +66,8 @@ pub fn bind(ruby: &magnus::Ruby, graphics: rgss::Graphics) -> magnus::error::Res
     sprite::bind(ruby)?;
     bitmap::bind(ruby)?;
     window::bind(ruby)?;
+    tilemap::bind(ruby)?;
+    plane::bind(ruby)?;
     viewport::bind(ruby)?;
 
     module.define_module_function("update", function!(update, 0))?;
