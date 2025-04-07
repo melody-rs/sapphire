@@ -1,9 +1,6 @@
-use convert_case::{Case, Casing};
 use magnus::{Module, function};
 use parking_lot::RwLock;
 use std::sync::OnceLock;
-
-use strum::IntoEnumIterator;
 
 static INPUT: OnceLock<RwLock<rgss::Input>> = OnceLock::new();
 
@@ -22,6 +19,30 @@ fn update() -> Result<(), magnus::Error> {
     }
 }
 
+fn triggered(key: i32) -> bool {
+    false
+}
+
+fn pressed(key: i32) -> bool {
+    false
+}
+
+fn repeat(key: i32) -> bool {
+    false
+}
+
+fn triggerex(key: magnus::Symbol) -> bool {
+    false
+}
+
+fn pressex(key: magnus::Symbol) -> bool {
+    false
+}
+
+fn repeatex(key: magnus::Symbol) -> bool {
+    false
+}
+
 pub fn bind(ruby: &magnus::Ruby, input: rgss::Input) -> magnus::error::Result<()> {
     if INPUT.set(RwLock::new(input)).is_err() {
         eprintln!("input static already set! this is not supposed to happen");
@@ -30,13 +51,15 @@ pub fn bind(ruby: &magnus::Ruby, input: rgss::Input) -> magnus::error::Result<()
 
     let module = ruby.define_module("Input")?;
 
-    for keycode in rgss::KeyCode::iter() {
-        let variant_name: &'static str = keycode.into();
-        let upper_snake_cased = variant_name.to_case(Case::UpperSnake);
-        module.const_set(upper_snake_cased, keycode as u16)?;
-    }
-
     module.define_module_function("update", function!(update, 0))?;
+
+    module.define_module_function("trigger?", function!(triggered, 1))?;
+    module.define_module_function("press?", function!(pressed, 1))?;
+    module.define_module_function("repeat?", function!(repeat, 1))?;
+
+    module.define_module_function("triggerex?", function!(triggerex, 1))?;
+    module.define_module_function("pressex?", function!(pressex, 1))?;
+    module.define_module_function("repeatex?", function!(repeatex, 1))?;
 
     Ok(())
 }

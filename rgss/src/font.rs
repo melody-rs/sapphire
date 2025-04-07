@@ -1,4 +1,4 @@
-use crate::{Arenas, Color, ColorKey, Graphics, graphics::BITMAP_TEXTURE_FORMAT};
+use crate::{Arenas, Color, ColorKey, FontKey, Graphics, graphics::BITMAP_TEXTURE_FORMAT};
 
 pub struct Fonts {
     // cosmic text
@@ -106,5 +106,23 @@ impl Font {
             out_color,
             ..*default
         }
+    }
+}
+
+impl FontKey {
+    pub fn set_all_from(self, arenas: &mut Arenas, other: FontKey) {
+        let [this, other] = arenas.fonts.get_disjoint_mut([self, other]).unwrap();
+
+        // these are straight copies
+        this.names = other.names.clone();
+        this.size = other.size;
+        this.bold = other.bold;
+        this.italic = other.italic;
+        this.shadow = other.shadow;
+        this.outline = other.outline;
+
+        // these aren't
+        arenas.colors[this.color] = arenas.colors[other.color];
+        arenas.colors[this.out_color] = arenas.colors[other.out_color];
     }
 }

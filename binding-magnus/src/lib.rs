@@ -105,6 +105,8 @@ mod input;
 mod modshot;
 mod oneshot;
 
+pub use font::Font as RbFont;
+
 mod arenas {
     use parking_lot::RwLock;
     use std::sync::OnceLock;

@@ -23,7 +23,6 @@ image.workspace = true
 whoami = "1.5.2"
 dirs = "6.0.0"
 log = "0.4.26"
-convert_case = "0.8.0"
 
 strum.workspace = true
 

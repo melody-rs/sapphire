@@ -38,6 +38,8 @@ impl Window {
         Ok(())
     }
 
+    fn update(&self) {}
+
     fn cursor_rect(rb_self: Obj<Window>) -> Result<magnus::Value, magnus::Error> {
         rb_self.ivar_get("cursor_rect")
     }
@@ -135,6 +137,8 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
     let class = ruby.define_class("Window", ruby.class_object())?;
     class.define_alloc_func::<Window>();
     class.define_method("initialize", method!(Window::initialize, -1))?;
+
+    class.define_method("update", method!(Window::update, 0))?;
 
     class.define_method("windowskin", method!(Window::windowskin, 0))?;
     class.define_method("windowskin=", method!(Window::set_windowskin, 1))?;

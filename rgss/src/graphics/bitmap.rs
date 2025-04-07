@@ -1,12 +1,13 @@
 use wgpu::util::DeviceExt;
 
-use crate::FileSystem;
+use crate::{FileSystem, FontKey};
 
 use super::Graphics;
 
 pub struct Bitmap {
     pub(crate) texture: wgpu::Texture,
     pub(crate) view: wgpu::TextureView,
+    pub font: FontKey,
 }
 
 fn descriptor_for(width: u32, height: u32) -> wgpu::TextureDescriptor<'static> {
@@ -30,7 +31,7 @@ fn descriptor_for(width: u32, height: u32) -> wgpu::TextureDescriptor<'static> {
 }
 
 impl Bitmap {
-    pub fn new(graphics: &Graphics, width: u32, height: u32) -> Self {
+    pub fn new(graphics: &Graphics, font: FontKey, width: u32, height: u32) -> Self {
         // TODO handle bitmaps that are too large
         let texture = graphics
             .wgpu
@@ -38,11 +39,16 @@ impl Bitmap {
             .create_texture(&descriptor_for(width, height));
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        Self { texture, view }
+        Self {
+            texture,
+            font,
+            view,
+        }
     }
 
     pub fn new_path(
         graphics: &Graphics,
+        font: FontKey,
         filesystem: &FileSystem,
         path: impl AsRef<camino::Utf8Path>,
     ) -> Self {
@@ -62,7 +68,11 @@ impl Bitmap {
         );
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        Self { texture, view }
+        Self {
+            texture,
+            font,
+            view,
+        }
     }
 
     pub fn width(&self) -> u32 {
