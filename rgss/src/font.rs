@@ -22,7 +22,7 @@ pub struct Font {
     pub color: ColorKey,
 
     pub shadow: bool,
-    pub outline: ColorKey,
+    pub outline: bool,
     pub out_color: ColorKey,
 }
 
@@ -50,21 +50,7 @@ impl Fonts {
             None,                              // no depth
         );
 
-        let color = arenas.colors.insert(Color::WHITE);
-        let outline = arenas.colors.insert(Color::WHITE);
-        let out_color = arenas.colors.insert(Color::GREY);
-
-        let default = Font {
-            names: vec!["Arial".to_string()],
-            size: 22,
-            bold: false,
-            italic: false,
-            color,
-
-            shadow: false,
-            outline,
-            out_color,
-        };
+        let default = Font::default(arenas);
 
         Self {
             font_system,
@@ -76,6 +62,49 @@ impl Fonts {
             text_renderer,
 
             default,
+        }
+    }
+}
+
+impl Font {
+    pub fn default(arenas: &mut Arenas) -> Self {
+        let color = arenas.colors.insert(Color::WHITE);
+        let out_color = arenas.colors.insert(Color::GREY);
+
+        Font {
+            names: vec!["Arial".to_string()],
+            size: 22,
+            bold: false,
+            italic: false,
+            color,
+
+            shadow: false,
+            outline: false,
+            out_color,
+        }
+    }
+
+    pub fn new(
+        default: &Self,
+        arenas: &mut Arenas,
+        names: Option<Vec<String>>,
+        size: Option<u32>,
+    ) -> Self {
+        let names = names.unwrap_or_else(|| default.names.clone());
+        let size = size.unwrap_or(default.size);
+
+        let color = arenas.colors[default.color];
+        let color = arenas.colors.insert(color);
+
+        let out_color = arenas.colors[default.out_color];
+        let out_color = arenas.colors.insert(out_color);
+
+        Self {
+            names,
+            size,
+            color,
+            out_color,
+            ..*default
         }
     }
 }

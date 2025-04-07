@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use wgpu::PipelineCache;
 use winit::window::Window as NativeWindow;
 
 mod builders {
@@ -31,7 +32,9 @@ use crate::{Arenas, Config, ViewportKey};
 
 pub struct Graphics {
     pub(crate) wgpu: Wgpu,
+    pub(crate) pipeline_cache: Option<PipelineCache>,
     pub global_viewport: ViewportKey,
+
     window: Arc<NativeWindow>,
 }
 
@@ -66,11 +69,50 @@ impl Graphics {
         arenas: &mut Arenas,
     ) -> Result<Self, InitError> {
         let wgpu = Wgpu::new(window.clone(), config).await?;
+
+        let adapter_info = wgpu.adapter.get_info();
+        log::info!(
+            "Selected adapter {} {}",
+            adapter_info.name,
+            adapter_info.driver
+        );
+        let (pipeline_cache, key) = wgpu::util::pipeline_cache_key(&adapter_info)
+            .filter(|_| wgpu.cache_supported())
+            .map(|key| {
+                log::info!("Loading pipeline cache from {key}");
+                let data = std::fs::read(&key)
+                    .inspect_err(|err| log::error!("Failed to read pipeline cache: {err}!"))
+                    .ok();
+                let desc = wgpu::PipelineCacheDescriptor {
+                    label: Some(&key),
+                    data: data.as_deref(),
+                    fallback: true,
+                };
+                let cache = unsafe { wgpu.device.create_pipeline_cache(&desc) };
+                (cache, key)
+            })
+            .unzip();
+
+        // TODO shaders
+
+        if let Some(data) = pipeline_cache
+            .as_ref()
+            .and_then(wgpu::PipelineCache::get_data)
+        {
+            let key = key.unwrap(); // should be Some() if cache is Some()
+            if let Err(err) = std::fs::write(key, data) {
+                log::error!("Failed to write pipeline cache: {err}!");
+            }
+        }
+
         let viewport = Viewport::global(arenas);
         let global_viewport = arenas.viewports.insert(viewport);
+
         Ok(Self {
             wgpu,
             window,
+            pipeline_cache,
+
             global_viewport,
         })
     }
@@ -170,5 +212,9 @@ impl Wgpu {
 
     pub fn multi_draw_supported(&self) -> bool {
         self.features.contains(Self::multi_draw_features())
+    }
+
+    pub fn cache_supported(&self) -> bool {
+        self.features.contains(wgpu::Features::PIPELINE_CACHE)
     }
 }

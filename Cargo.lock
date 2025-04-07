@@ -3173,6 +3173,7 @@ dependencies = [
  "image",
  "itertools 0.14.0",
  "kira",
+ "log",
  "num_enum",
  "parking_lot",
  "serde",

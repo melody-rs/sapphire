@@ -30,3 +30,5 @@ num_enum = "0.7.3"
 strum.workspace = true
 
 serde.workspace = true
+
+log.workspace = true
