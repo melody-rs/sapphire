@@ -20,7 +20,7 @@ impl FileSystem {
 }
 
 impl FileSystemTrait for FileSystem {
-    fn read_file(&self, path: &Utf8Path) -> Result<Box<dyn File>> {
+    fn open_file(&self, path: &Utf8Path) -> Result<Box<dyn File>> {
         let path = self.root_path.join(path);
         if !path.exists() {
             return Err(Error::NotExist);
@@ -54,5 +54,11 @@ impl FileSystemTrait for FileSystem {
             })
             .flatten()
             .try_collect()
+    }
+}
+
+impl File for std::fs::File {
+    fn file_len(&self) -> Option<u64> {
+        self.metadata().ok().map(|m| m.len())
     }
 }

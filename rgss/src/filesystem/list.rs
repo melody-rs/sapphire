@@ -16,9 +16,9 @@ impl FileSystem {
 }
 
 impl FileSystemTrait for FileSystem {
-    fn read_file(&self, path: &camino::Utf8Path) -> Result<Box<dyn super::File>> {
+    fn open_file(&self, path: &camino::Utf8Path) -> Result<Box<dyn super::File>> {
         for fs in self.filesystems.iter() {
-            let result = fs.read_file(path);
+            let result = fs.open_file(path);
             match result {
                 Ok(f) => return Ok(f),
                 Err(Error::NotExist) => continue,

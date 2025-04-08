@@ -35,13 +35,26 @@ struct Entry {
     is_file: bool,
 }
 
-pub trait File: Read + Seek + Send + Sync {}
-impl<T> File for T where T: Read + Seek + Send + Sync {}
+pub trait File: Read + Seek + Send + Sync {
+    fn file_len(&self) -> Option<u64>;
+}
+
+impl File for &mut dyn File {
+    fn file_len(&self) -> Option<u64> {
+        (**self).file_len()
+    }
+}
+
+impl File for Box<dyn File> {
+    fn file_len(&self) -> Option<u64> {
+        (**self).file_len()
+    }
+}
 
 // designed to be object safe.
 // this is so we can load any number of filesystems at runtime
 trait FileSystemTrait: Send + Sync {
-    fn read_file(&self, path: &Utf8Path) -> Result<Box<dyn File>>;
+    fn open_file(&self, path: &Utf8Path) -> Result<Box<dyn File>>;
 
     fn read_dir(&self, path: &Utf8Path) -> Result<Vec<Entry>>;
 }
@@ -54,7 +67,7 @@ impl FileSystem {
 
         // TODO
         if let Some(archive_path) = archive_path {
-            let archive_file = host.read_file(archive_path)?;
+            let archive_file = host.open_file(archive_path)?;
             let archive = archive::FileSystem::new(archive_file)?;
             list.push(Box::new(archive));
         }
@@ -66,7 +79,7 @@ impl FileSystem {
         Ok(Self { fs: path_cache })
     }
 
-    pub fn read_file(&self, path: impl AsRef<Utf8Path>) -> Result<Box<dyn File>> {
-        self.fs.read_file(path.as_ref())
+    pub fn open_file(&self, path: impl AsRef<Utf8Path>) -> Result<Box<dyn File>> {
+        self.fs.open_file(path.as_ref())
     }
 }

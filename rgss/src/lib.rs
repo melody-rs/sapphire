@@ -8,7 +8,7 @@ mod input;
 pub use input::{Input, KeyCode};
 
 mod audio;
-pub use audio::Audio;
+pub use audio::{Audio, PlayOptions};
 
 mod filesystem;
 pub use filesystem::FileSystem;

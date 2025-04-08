@@ -10,7 +10,7 @@ fn main() {
         .unwrap_or_default();
 
     let printer = color_backtrace::BacktracePrinter::new()
-        .lib_verbosity(color_backtrace::Verbosity::Minimal) // because we have a custom panic handler we use lib_verbosity instead (is weird)
+        .lib_verbosity(color_backtrace::Verbosity::Medium) // because we have a custom panic handler we use lib_verbosity instead (is weird)
         .message("Sapphire has encountered a fatal error!");
     std::panic::set_hook(Box::new(move |info| {
         let _ = printer.print_panic_info(info, &mut color_backtrace::default_output_stream());

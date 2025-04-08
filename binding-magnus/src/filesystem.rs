@@ -19,7 +19,7 @@ fn load_data(path: String) -> magnus::error::Result<Value> {
     // TODO this does *double* copies! which is bad.
     let filesystem = get();
     // FIXME proper error handling!
-    let mut file = filesystem.read_file(path).expect("failed to read file");
+    let mut file = filesystem.open_file(path).expect("failed to read file");
 
     let mut buf = vec![];
     file.read_to_end(&mut buf).expect("failed to read file");

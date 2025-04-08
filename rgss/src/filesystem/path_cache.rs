@@ -65,9 +65,9 @@ fn to_lowercase(p: impl AsRef<Utf8Path>) -> Utf8PathBuf {
 }
 
 impl FileSystemTrait for FileSystem {
-    fn read_file(&self, path: &camino::Utf8Path) -> Result<Box<dyn super::File>> {
+    fn open_file(&self, path: &camino::Utf8Path) -> Result<Box<dyn super::File>> {
         let path = self.desensitize(path).ok_or(Error::NotExist)?;
-        self.fs.read_file(path)
+        self.fs.open_file(path)
     }
 
     fn read_dir(&self, path: &camino::Utf8Path) -> Result<Vec<super::Entry>> {

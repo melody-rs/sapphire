@@ -53,7 +53,7 @@ impl Bitmap {
         path: impl AsRef<camino::Utf8Path>,
     ) -> Self {
         // TODO handle errors
-        let mut image_file = filesystem.read_file(path).unwrap();
+        let mut image_file = filesystem.open_file(path).unwrap();
 
         let mut image_data = vec![];
         image_file.read_to_end(&mut image_data).unwrap();

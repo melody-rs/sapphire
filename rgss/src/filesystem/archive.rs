@@ -42,7 +42,7 @@ impl FileSystem {
 }
 
 impl FileSystemTrait for FileSystem {
-    fn read_file(&self, path: &camino::Utf8Path) -> Result<Box<dyn File>> {
+    fn open_file(&self, path: &camino::Utf8Path) -> Result<Box<dyn File>> {
         let entry = self.files.get(path).ok_or(Error::NotExist)?;
         let mut buf = vec![0; entry.size as usize];
 
@@ -202,4 +202,10 @@ fn read_header(file: &mut impl File) -> Result<u8> {
     }
 
     Ok(header_buf[7])
+}
+
+impl File for std::io::Cursor<Vec<u8>> {
+    fn file_len(&self) -> Option<u64> {
+        Some(self.get_ref().len() as u64)
+    }
 }
