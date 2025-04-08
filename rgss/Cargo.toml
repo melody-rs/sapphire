@@ -39,4 +39,3 @@ ctrlc = { version = "3.4.6", optional = true }
 # replicates SDL behaviour and traps ctrlc
 trap_ctrlc = ["ctrlc"]
 trap_termination = ["ctrlc/termination"]
-default = ["trap_ctrlc"]
