@@ -87,10 +87,10 @@ impl PlayOptions {
     }
 
     fn volume_to_db(&self) -> kira::Decibels {
-        let percent = self.volume.map(|v| v as f32 / 100.0).unwrap_or(1.0);
+        let amplitude = self.volume.map(|v| v as f32 / 100.0).unwrap_or(1.0);
         // TODO (my hears hurt while figuring this one out lmao, so i need a break)
         // https://github.com/mkxp-z/mkxp-z/pull/208/files#diff-3216992fdc41349399a23a9468d6e272ba8382e89f63d2beebd0d477b468372eR174-R200
-        kira::Decibels((percent).log10() * 50.0)
+        kira::Decibels(amplitude.log10() * 4.0 / 7.0 + 1.0)
     }
 }
 
