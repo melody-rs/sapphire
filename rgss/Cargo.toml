@@ -32,3 +32,11 @@ strum.workspace = true
 serde.workspace = true
 
 log.workspace = true
+
+ctrlc = { version = "3.4.6", optional = true }
+
+[features]
+# replicates SDL behaviour and traps ctrlc
+trap_ctrlc = ["ctrlc"]
+trap_termination = ["ctrlc/termination"]
+default = ["trap_ctrlc"]

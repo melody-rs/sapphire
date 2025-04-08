@@ -9,7 +9,6 @@ pub fn get() -> &'static RwLock<rgss::Input> {
 }
 
 fn update() -> Result<(), magnus::Error> {
-    println!("update called");
     let mut input = get().write();
     input.update();
 

@@ -26,6 +26,9 @@ impl Input {
 
     /// Process all incoming events from the event loop, updating all input state.
     pub fn update(&mut self) {
+        // reset all inputs
+        self.quit_requested = false;
+
         for event in self.events.iter() {
             match event {
                 // TODO handle window events

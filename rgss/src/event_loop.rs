@@ -91,6 +91,18 @@ impl EventLoop {
             }
         }
 
+        #[cfg(feature = "trap_ctrlc")]
+        {
+            let ctrlc_send = self.event_send.clone();
+            let result = ctrlc::set_handler(move || {
+                let window_event = winit::event::WindowEvent::CloseRequested;
+                let _ = ctrlc_send.send(Event::WindowEvent(window_event));
+            });
+            if let Err(e) = result {
+                log::error!("Failed to set ctrl+c handler: {e}")
+            }
+        }
+
         let mut app = App {
             event_send: self.event_send,
             on_first_resume: Some(on_first_resume),

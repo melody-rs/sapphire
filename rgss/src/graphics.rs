@@ -108,17 +108,56 @@ impl Graphics {
         let viewport = Viewport::global(arenas);
         let global_viewport = arenas.viewports.insert(viewport);
 
-        Ok(Self {
+        let this = Self {
             wgpu,
             window,
             pipeline_cache,
 
             global_viewport,
-        })
+        };
+
+        this.render_first_frame();
+
+        Ok(this)
     }
 
     pub fn main_window(&self) -> &Arc<NativeWindow> {
         &self.window
+    }
+
+    fn render_first_frame(&self) {
+        let result = self.wgpu.surface.get_current_texture();
+
+        let surface_texture = match result {
+            Ok(t) => t,
+            Err(e) => {
+                log::error!("Failed to render initial frame {e:}");
+                return;
+            }
+        };
+        let texture_view = surface_texture.texture.create_view(&Default::default());
+
+        let mut encoder = self.wgpu.device.create_command_encoder(&Default::default());
+
+        let rpass_builder =
+            RenderPassBuilder::new().with_color_attachment(wgpu::RenderPassColorAttachment {
+                view: &texture_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                    store: wgpu::StoreOp::Store,
+                },
+            });
+        let rpass_desc = rpass_builder.build();
+
+        let rpass = encoder.begin_render_pass(&rpass_desc);
+        drop(rpass); // drop to finish it
+
+        let command_buffer = encoder.finish();
+        self.wgpu.queue.submit([command_buffer]);
+
+        self.window.pre_present_notify();
+        surface_texture.present();
     }
 }
 
