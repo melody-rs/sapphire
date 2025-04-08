@@ -38,7 +38,6 @@ impl AsKey for Rect {
 
 impl Rect {
     pub fn new(arenas: &mut rgss::Arenas, x: i32, y: i32, width: u32, height: u32) -> Self {
-        let mut arenas = arenas::get().write();
         let rect = rgss::Rect {
             x,
             y,

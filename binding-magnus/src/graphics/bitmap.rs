@@ -173,20 +173,7 @@ impl Bitmap {
     }
 
     fn draw_text(&self, args: &[Value]) -> magnus::error::Result<()> {
-        magnus::scan_args::check_arity(args.len(), 2..=3)?;
-
-        match *args {
-            [rect, string] => {
-                let rb_rect: &RbRect = TryConvert::try_convert(rect)?;
-                let string: String = TryConvert::try_convert(string)?;
-            }
-            [rect, string, align] => {
-                let rb_rect: &RbRect = TryConvert::try_convert(rect)?;
-                let string: String = TryConvert::try_convert(string)?;
-                let align: i32 = TryConvert::try_convert(align)?;
-            }
-            _ => unreachable!(),
-        }
+        magnus::scan_args::check_arity(args.len(), 2..=5)?;
 
         Ok(())
     }
