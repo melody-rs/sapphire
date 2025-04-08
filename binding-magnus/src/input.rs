@@ -9,6 +9,7 @@ pub fn get() -> &'static RwLock<rgss::Input> {
 }
 
 fn update() -> Result<(), magnus::Error> {
+    println!("update called");
     let mut input = get().write();
     input.update();
 
@@ -43,6 +44,10 @@ fn repeatex(key: magnus::Symbol) -> bool {
     false
 }
 
+fn quit() -> bool {
+    get().read().quit_requested
+}
+
 pub fn bind(ruby: &magnus::Ruby, input: rgss::Input) -> magnus::error::Result<()> {
     if INPUT.set(RwLock::new(input)).is_err() {
         eprintln!("input static already set! this is not supposed to happen");
@@ -50,6 +55,24 @@ pub fn bind(ruby: &magnus::Ruby, input: rgss::Input) -> magnus::error::Result<()
     }
 
     let module = ruby.define_module("Input")?;
+
+    module.const_set("ACTION", 1)?;
+    module.const_set("CANCEL", 1)?;
+    module.const_set("DEACTIVATE", 1)?;
+    module.const_set("Q", 1)?;
+    module.const_set("R", 1)?;
+
+    module.const_set("UP", 1)?;
+    module.const_set("DOWN", 1)?;
+    module.const_set("LEFT", 1)?;
+    module.const_set("RIGHT", 1)?;
+
+    module.const_set("F5", 1)?;
+    module.const_set("F6", 1)?;
+    module.const_set("F7", 1)?;
+    module.const_set("F8", 1)?;
+    module.const_set("F9", 1)?;
+    module.const_set("F10", 1)?;
 
     module.define_module_function("update", function!(update, 0))?;
 
@@ -60,6 +83,8 @@ pub fn bind(ruby: &magnus::Ruby, input: rgss::Input) -> magnus::error::Result<()
     module.define_module_function("triggerex?", function!(triggerex, 1))?;
     module.define_module_function("pressex?", function!(pressex, 1))?;
     module.define_module_function("repeatex?", function!(repeatex, 1))?;
+
+    module.define_module_function("quit?", function!(quit, 0))?;
 
     Ok(())
 }

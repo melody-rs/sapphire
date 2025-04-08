@@ -68,3 +68,54 @@ pub struct Ctx {
     pub filesystem: FileSystem,
     pub fonts: Fonts,
 }
+
+pub trait ArenaKey: slotmap::Key {
+    type Value;
+
+    fn slotmap(arenas: &Arenas) -> &slotmap::SlotMap<Self, Self::Value>;
+    fn slotmap_mut(arenas: &mut Arenas) -> &mut slotmap::SlotMap<Self, Self::Value>;
+}
+
+macro_rules! impl_key_for {
+    ($type:ty => $value:ty : $field:ident) => {
+        impl ArenaKey for $type {
+            type Value = $value;
+            fn slotmap(arenas: &Arenas) -> &slotmap::SlotMap<Self, Self::Value> {
+                &arenas.$field
+            }
+            fn slotmap_mut(arenas: &mut Arenas) -> &mut slotmap::SlotMap<Self, Self::Value> {
+                &mut arenas.$field
+            }
+        }
+    };
+}
+
+impl_key_for!(FontKey => Font: fonts);
+impl_key_for!(ColorKey => Color: colors);
+impl_key_for!(ToneKey => Tone: tones);
+impl_key_for!(RectKey => Rect: rects);
+impl_key_for!(TableKey => Table: tables);
+impl_key_for!(BitmapKey => Bitmap: bitmaps);
+impl_key_for!(ViewportKey => Viewport: viewports);
+impl_key_for!(WindowKey => Window: windows);
+impl_key_for!(SpriteKey => Sprite: sprites);
+
+impl<T> std::ops::Index<T> for Arenas
+where
+    T: ArenaKey + 'static,
+{
+    type Output = T::Value;
+
+    fn index(&self, index: T) -> &Self::Output {
+        &T::slotmap(self)[index]
+    }
+}
+
+impl<T> std::ops::IndexMut<T> for Arenas
+where
+    T: ArenaKey + 'static,
+{
+    fn index_mut(&mut self, index: T) -> &mut Self::Output {
+        &mut T::slotmap_mut(self)[index]
+    }
+}

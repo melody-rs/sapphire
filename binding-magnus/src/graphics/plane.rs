@@ -1,5 +1,7 @@
 use magnus::{Class, Module, Object, method, typed_data::Obj};
 
+use crate::{bind_prop, def_stubbed_prop};
+
 use super::{RbBitmap, RbViewport};
 
 #[derive(Default)]
@@ -17,35 +19,11 @@ impl Plane {
         rb_self.ivar_set("bitmap", bitmap)
     }
 
-    fn zoom_x(&self) -> f32 {
-        0.0
-    }
-
-    fn set_zoom_x(&self, zoom: f32) {}
-
-    fn zoom_y(&self) -> f32 {
-        0.0
-    }
-
-    fn set_zoom_y(&self, zoom: f32) {}
-
-    fn ox(&self) -> i32 {
-        0
-    }
-
-    fn set_ox(&self, offset: i32) {}
-
-    fn oy(&self) -> i32 {
-        0
-    }
-
-    fn set_oy(&self, offset: i32) {}
-
-    fn z(&self) -> i32 {
-        0
-    }
-
-    fn set_z(&self, z: i32) {}
+    def_stubbed_prop!(zoom_x -> f32);
+    def_stubbed_prop!(zoom_y -> f32);
+    def_stubbed_prop!(ox -> i32);
+    def_stubbed_prop!(oy -> i32);
+    def_stubbed_prop!(z -> i32);
 
     fn dispose(&self) {}
 }
@@ -59,20 +37,11 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
     class.define_method("bitmap", method!(Plane::bitmap, 0))?;
     class.define_method("bitmap=", method!(Plane::set_bitmap, 1))?;
 
-    class.define_method("zoom_x", method!(Plane::zoom_x, 0))?;
-    class.define_method("zoom_x=", method!(Plane::set_zoom_x, 1))?;
-
-    class.define_method("zoom_y", method!(Plane::zoom_y, 0))?;
-    class.define_method("zoom_y=", method!(Plane::set_zoom_y, 1))?;
-
-    class.define_method("ox", method!(Plane::ox, 0))?;
-    class.define_method("ox=", method!(Plane::set_ox, 1))?;
-
-    class.define_method("oy", method!(Plane::oy, 0))?;
-    class.define_method("oy=", method!(Plane::set_oy, 1))?;
-
-    class.define_method("z", method!(Plane::z, 0))?;
-    class.define_method("z=", method!(Plane::set_z, 1))?;
+    bind_prop!(class.zoom_x = Plane::zoom_x, Plane::set_zoom_x);
+    bind_prop!(class.zoom_y = Plane::zoom_y, Plane::set_zoom_y);
+    bind_prop!(class.ox = Plane::ox, Plane::set_ox);
+    bind_prop!(class.oy = Plane::oy, Plane::set_oy);
+    bind_prop!(class.z = Plane::z, Plane::set_z);
 
     class.define_method("dispose", method!(Plane::dispose, 0))?;
 

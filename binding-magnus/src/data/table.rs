@@ -1,7 +1,7 @@
 use magnus::{Class, Module, Object, RString, TryConvert, Value, function, method};
 use std::cell::Cell;
 
-use crate::arenas;
+use crate::{AsKey, arenas};
 
 #[derive(Default)]
 #[magnus::wrap(class = "Table", size, free_immediately)]
@@ -19,8 +19,20 @@ impl Drop for Table {
     fn drop(&mut self) {
         let mut arenas = crate::arenas::get().write();
         if arenas.tables.remove(self.0.get()).is_none() {
-            log::warn!("Table {:p} was drop'd twice!", self as *mut _)
+            log::warn!(
+                "Table {:p}:{:?} was drop'd twice!",
+                self as *mut _,
+                self.as_key()
+            )
         }
+    }
+}
+
+impl AsKey for Table {
+    type Key = rgss::TableKey;
+
+    fn as_key(&self) -> Self::Key {
+        self.0.get()
     }
 }
 
@@ -59,9 +71,9 @@ impl Table {
         Self::from(table_key)
     }
 
-    fn serialize(table: &Table) -> RString {
+    fn serialize(table: &Table, _: i32) -> RString {
         let arenas = arenas::get().read();
-        let table = &arenas.tables[table.0.get()];
+        let table = &arenas[table.as_key()];
         // FIXME calculate capacity
         let string = RString::buf_new(0);
 
@@ -80,7 +92,7 @@ impl Table {
         string
     }
 
-    fn index(&self, args: &[Value]) -> magnus::error::Result<i16> {
+    fn index(&self, args: &[Value]) -> magnus::error::Result<Option<i16>> {
         magnus::scan_args::check_arity(args.len(), 1..=4)?;
         let index = match *args {
             [rb_x] => (TryConvert::try_convert(rb_x)?, 0, 0),
@@ -98,7 +110,7 @@ impl Table {
         };
 
         let arenas = arenas::get().read();
-        Ok(arenas.tables[self.0.get()][index])
+        Ok(arenas[self.as_key()].get(index).copied())
     }
 
     fn index_set(&self, args: &[Value]) -> magnus::error::Result<()> {
@@ -120,7 +132,9 @@ impl Table {
         let value = args.last().copied().map(TryConvert::try_convert).unwrap()?;
 
         let mut arenas = arenas::get().write();
-        arenas.tables[self.0.get()][index] = value;
+        if let Some(table_val) = arenas[self.as_key()].get_mut(index) {
+            *table_val = value;
+        }
         Ok(())
     }
 }
@@ -130,7 +144,7 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
     class.define_alloc_func::<Table>();
     class.define_method("initialize", method!(Table::initialize, -1))?;
     class.define_singleton_method("_load", function!(Table::deserialize, 1))?;
-    class.define_method("_dump_data", method!(Table::serialize, 0))?;
+    class.define_method("_dump", method!(Table::serialize, 1))?;
 
     class.define_method("[]", method!(Table::index, -1))?;
     class.define_method("[]=", method!(Table::index_set, -1))?;

@@ -7,6 +7,9 @@ pub use keycode::KeyCode;
 pub struct Input {
     events: Events,
     exited: bool,
+
+    pub allow_exit: bool,
+    pub quit_requested: bool,
 }
 
 // TODO add an optional pump_events feature that uses winit::EventLoopExtPumpEvents that allows running bindings on the main thread
@@ -15,26 +18,31 @@ impl Input {
         Self {
             events,
             exited: false,
+
+            allow_exit: false,
+            quit_requested: false,
         }
     }
 
     /// Process all incoming events from the event loop, updating all input state.
     pub fn update(&mut self) {
-        let mut needs_exit = false;
         for event in self.events.iter() {
             match event {
                 // TODO handle window events
                 Event::WindowEvent(window_event) => {
                     //
                     match window_event {
-                        WindowEvent::CloseRequested | WindowEvent::Destroyed => needs_exit = true,
+                        WindowEvent::CloseRequested | WindowEvent::Destroyed => {
+                            self.quit_requested = true
+                        }
                         _ => {}
                     }
                 }
                 Event::Exiting => self.exited = true,
             }
         }
-        if needs_exit {
+
+        if self.quit_requested && self.allow_exit {
             self.exit();
         }
     }

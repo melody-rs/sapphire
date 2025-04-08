@@ -25,6 +25,7 @@ dirs = "6.0.0"
 log = "0.4.26"
 
 strum.workspace = true
+paste = "1.0.15"       # need to find alternative
 
 rfd.workspace = true
 

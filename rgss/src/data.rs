@@ -143,6 +143,20 @@ impl Table {
 
         self.data = new_data;
     }
+
+    fn index_for(&self, (x, y, z): (usize, usize, usize)) -> usize {
+        x + (y * self.xsize + (z * self.xsize * self.ysize))
+    }
+
+    pub fn get(&self, index: (usize, usize, usize)) -> Option<&i16> {
+        let index = self.index_for(index);
+        self.data.get(index)
+    }
+
+    pub fn get_mut(&mut self, index: (usize, usize, usize)) -> Option<&mut i16> {
+        let index = self.index_for(index);
+        self.data.get_mut(index)
+    }
 }
 
 impl Index<usize> for Table {
@@ -151,6 +165,7 @@ impl Index<usize> for Table {
     fn index(&self, index: usize) -> &Self::Output {
         debug_assert!(index < self.xsize);
 
+        let index = self.index_for((index, 0, 0));
         &self.data[index]
     }
 }
@@ -159,6 +174,7 @@ impl IndexMut<usize> for Table {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         debug_assert!(index < self.xsize);
 
+        let index = self.index_for((index, 0, 0));
         &mut self.data[index]
     }
 }
@@ -170,7 +186,8 @@ impl Index<(usize, usize)> for Table {
         debug_assert!(x < self.xsize);
         debug_assert!(y < self.ysize);
 
-        &self[x + (y * self.xsize)]
+        let index = self.index_for((x, y, 0));
+        &self[index]
     }
 }
 
@@ -179,29 +196,31 @@ impl IndexMut<(usize, usize)> for Table {
         debug_assert!(x < self.xsize);
         debug_assert!(y < self.ysize);
 
-        let xsize = self.xsize;
-        &mut self.data[x + (y * xsize)]
+        let index = self.index_for((x, y, 0));
+        &mut self.data[index]
     }
 }
 
 impl Index<(usize, usize, usize)> for Table {
     type Output = i16;
 
-    fn index(&self, (x, y, z): (usize, usize, usize)) -> &Self::Output {
-        debug_assert!(x < self.xsize);
-        debug_assert!(y < self.ysize);
-        debug_assert!(z < self.zsize);
+    fn index(&self, index: (usize, usize, usize)) -> &Self::Output {
+        debug_assert!(index.0 < self.xsize);
+        debug_assert!(index.1 < self.ysize);
+        debug_assert!(index.2 < self.zsize);
 
-        &self.data[x + (y * self.xsize + (z * self.xsize * self.ysize))]
+        let index = self.index_for(index);
+        &self.data[index]
     }
 }
 
 impl IndexMut<(usize, usize, usize)> for Table {
-    fn index_mut(&mut self, (x, y, z): (usize, usize, usize)) -> &mut Self::Output {
-        debug_assert!(x < self.xsize);
-        debug_assert!(y < self.ysize);
-        debug_assert!(z < self.zsize);
+    fn index_mut(&mut self, index: (usize, usize, usize)) -> &mut Self::Output {
+        debug_assert!(index.0 < self.xsize);
+        debug_assert!(index.1 < self.ysize);
+        debug_assert!(index.2 < self.zsize);
 
-        &mut self.data[x + (y * self.xsize + (z * self.xsize * self.ysize))]
+        let index = self.index_for(index);
+        &mut self.data[index]
     }
 }

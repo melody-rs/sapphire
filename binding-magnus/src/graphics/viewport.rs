@@ -2,7 +2,7 @@ use magnus::{Class, Module, Object, TryConvert, Value, method, typed_data::Obj};
 use std::cell::Cell;
 
 use crate::{
-    arenas,
+    AsKey, arenas,
     data::{RbColor, RbRect, RbTone},
     graphics,
 };
@@ -10,6 +10,14 @@ use crate::{
 #[derive(Default)]
 #[magnus::wrap(class = "Viewport", size, free_immediately)]
 pub struct Viewport(pub Cell<rgss::ViewportKey>);
+
+impl AsKey for Viewport {
+    type Key = rgss::ViewportKey;
+
+    fn as_key(&self) -> Self::Key {
+        self.0.get()
+    }
+}
 
 impl Viewport {
     fn initialize(this: Obj<Self>, args: &[Value]) -> Result<(), magnus::Error> {
@@ -19,7 +27,7 @@ impl Viewport {
         let rect = match *args {
             [rect] => {
                 let rect: &RbRect = TryConvert::try_convert(rect)?;
-                arenas.rects[rect.0.get()]
+                arenas[rect.as_key()]
             }
             [x, y, width, height] => {
                 let x = TryConvert::try_convert(x)?;
@@ -47,7 +55,7 @@ impl Viewport {
         let z = viewport.z;
         let viewport_key = arenas.viewports.insert(viewport);
 
-        let global_viewport = &mut arenas.viewports[graphics.global_viewport];
+        let global_viewport = &mut arenas[graphics.global_viewport];
         global_viewport
             .z_list
             .insert(z, rgss::Drawable::Viewport(viewport_key));
@@ -72,7 +80,7 @@ impl Viewport {
     fn z(&self) -> Result<i32, magnus::Error> {
         let arenas = arenas::get().read();
         let viewport_key = self.0.get();
-        let z = arenas.viewports[viewport_key].z;
+        let z = arenas[viewport_key].z;
         Ok(z.value())
     }
 
@@ -81,12 +89,12 @@ impl Viewport {
         let graphics = graphics::get().read();
         let viewport_key = self.0.get();
 
-        let viewport = &mut arenas.viewports[viewport_key];
+        let viewport = &mut arenas[viewport_key];
         let old_z = viewport.z;
         let new_z = old_z.update_value(z);
         viewport.z = new_z;
 
-        let global_viewport = &mut arenas.viewports[graphics.global_viewport];
+        let global_viewport = &mut arenas[graphics.global_viewport];
         global_viewport.z_list.re_insert(old_z, new_z);
 
         Ok(())

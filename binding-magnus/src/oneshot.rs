@@ -1,5 +1,7 @@
 use magnus::{Module, Object, function, method};
 
+use crate::input;
+
 mod journal;
 mod steam;
 mod wallpaper;
@@ -19,6 +21,11 @@ fn msgbox(module: magnus::RModule, kind: u8, text: String) -> magnus::error::Res
             .set_title("Sapphire")
             .set_level(rfd::MessageLevel::Info)
             .show(),
+        2 => rfd::MessageDialog::new()
+            .set_description(text)
+            .set_title("Sapphire")
+            .set_level(rfd::MessageLevel::Error)
+            .show(),
         3 => rfd::MessageDialog::new()
             .set_description(text)
             .set_title("Sapphire")
@@ -30,9 +37,15 @@ fn msgbox(module: magnus::RModule, kind: u8, text: String) -> magnus::error::Res
     Ok(matches!(result, rfd::MessageDialogResult::Custom(res) if res == yes))
 }
 
-fn exiting(value: bool) {}
+fn exiting(value: bool) {
+    if value {
+        input::get().write().exit();
+    }
+}
 
-fn allow_exit(value: bool) {}
+fn allow_exit(value: bool) {
+    input::get().write().allow_exit = value;
+}
 
 pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
     let module = ruby.define_module("Oneshot")?;
@@ -64,6 +77,7 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
 
     let msg = module.define_module("Msg")?;
     msg.const_set("INFO", 1)?;
+    msg.const_set("ERR", 2)?;
     msg.const_set("YESNO", 3)?;
 
     module.define_module_function("set_yes_no", method!(set_yes_no, 2))?;

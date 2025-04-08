@@ -514,6 +514,7 @@ dependencies = [
  "log",
  "magnus",
  "parking_lot",
+ "paste",
  "rb-sys",
  "rfd",
  "rgss",

@@ -2,7 +2,7 @@ use magnus::{Class, Module, Object, method, typed_data::Obj};
 use std::cell::Cell;
 
 use super::{RbBitmap, RbViewport};
-use crate::{arenas, data::RbRect};
+use crate::{AsKey, arenas, bind_prop, data::RbRect, def_stubbed_prop};
 
 #[derive(Default)]
 #[magnus::wrap(class = "Window", size, free_immediately)]
@@ -12,15 +12,28 @@ impl Drop for Window {
     fn drop(&mut self) {
         let mut arenas = crate::arenas::get().write();
         if arenas.windows.remove(self.0.get()).is_none() {
-            log::warn!("Window {:p} was drop'd twice!", self as *mut _)
+            log::warn!(
+                "Window {:p}:{:?} was drop'd twice!",
+                self as *mut _,
+                self.as_key()
+            )
         }
+    }
+}
+
+impl AsKey for Window {
+    type Key = rgss::WindowKey;
+
+    fn as_key(&self) -> Self::Key {
+        self.0.get()
     }
 }
 
 impl Window {
     fn initialize(this: Obj<Self>, args: &[magnus::Value]) -> Result<(), magnus::Error> {
         let args = magnus::scan_args::scan_args::<(), _, (), (), (), ()>(args)?;
-        let (viewport,): (Option<&RbViewport>,) = args.optional;
+        let (viewport,) = args.optional;
+        let viewport: Option<&RbViewport> = viewport.flatten();
 
         let mut arenas = arenas::get().write();
 
@@ -84,53 +97,19 @@ impl Window {
         }
     }
 
-    fn active(&self) -> bool {
-        true
-    }
+    def_stubbed_prop!(active -> bool);
+    def_stubbed_prop!(visible: true -> bool);
+    def_stubbed_prop!(pause -> bool);
+    def_stubbed_prop!(x -> i32);
+    def_stubbed_prop!(y -> i32);
+    def_stubbed_prop!(width: 640 -> i32);
+    def_stubbed_prop!(height: 480 -> i32);
+    def_stubbed_prop!(z -> i32);
+    def_stubbed_prop!(opacity -> i32);
+    def_stubbed_prop!(back_opacity -> i32);
+    def_stubbed_prop!(contents_opacity -> i32);
 
-    fn set_active(&self, mirror: bool) {}
-
-    fn visible(&self) -> bool {
-        true
-    }
-
-    fn set_visible(&self, mirror: bool) {}
-
-    fn x(&self) -> i32 {
-        0
-    }
-
-    fn set_x(&self, x: i32) {}
-
-    fn y(&self) -> i32 {
-        0
-    }
-
-    fn set_y(&self, y: i32) {}
-
-    fn width(&self) -> i32 {
-        640
-    }
-
-    fn set_width(&self, y: i32) {}
-
-    fn height(&self) -> i32 {
-        480
-    }
-
-    fn set_height(&self, y: i32) {}
-
-    fn z(&self) -> i32 {
-        0
-    }
-
-    fn set_z(&self, z: i32) {}
-
-    fn back_opacity(&self) -> i32 {
-        255
-    }
-
-    fn set_back_opacity(&self, z: i32) {}
+    fn dispose(&self) {}
 }
 
 pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
@@ -140,38 +119,34 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
 
     class.define_method("update", method!(Window::update, 0))?;
 
-    class.define_method("windowskin", method!(Window::windowskin, 0))?;
-    class.define_method("windowskin=", method!(Window::set_windowskin, 1))?;
+    bind_prop!(
+        class.windowskin = Window::windowskin,
+        Window::set_windowskin
+    );
+    bind_prop!(class.contents = Window::contents, Window::set_contents);
+    bind_prop!(
+        class.cursor_rect = Window::cursor_rect,
+        Window::set_cursor_rect
+    );
+    bind_prop!(class.active = Window::active, Window::set_active);
+    bind_prop!(class.pause = Window::pause, Window::set_pause);
+    bind_prop!(class.visible = Window::visible, Window::set_visible);
+    bind_prop!(class.x = Window::x, Window::set_x);
+    bind_prop!(class.y = Window::y, Window::set_y);
+    bind_prop!(class.width = Window::width, Window::set_width);
+    bind_prop!(class.height = Window::height, Window::set_height);
+    bind_prop!(class.z = Window::z, Window::set_z);
+    bind_prop!(class.opacity = Window::opacity, Window::set_opacity);
+    bind_prop!(
+        class.back_opacity = Window::back_opacity,
+        Window::set_back_opacity
+    );
+    bind_prop!(
+        class.contents_opacity = Window::contents_opacity,
+        Window::set_contents_opacity
+    );
 
-    class.define_method("contents", method!(Window::contents, 0))?;
-    class.define_method("contents=", method!(Window::set_contents, 1))?;
-
-    class.define_method("cursor_rect", method!(Window::cursor_rect, 0))?;
-    class.define_method("cursor_rect=", method!(Window::set_cursor_rect, 1))?;
-
-    class.define_method("active", method!(Window::active, 0))?;
-    class.define_method("active=", method!(Window::set_active, 1))?;
-
-    class.define_method("visible", method!(Window::visible, 0))?;
-    class.define_method("visible=", method!(Window::set_visible, 1))?;
-
-    class.define_method("x", method!(Window::x, 0))?;
-    class.define_method("x=", method!(Window::set_x, 1))?;
-
-    class.define_method("y", method!(Window::y, 0))?;
-    class.define_method("y=", method!(Window::set_y, 1))?;
-
-    class.define_method("width", method!(Window::width, 0))?;
-    class.define_method("width=", method!(Window::set_width, 1))?;
-
-    class.define_method("height", method!(Window::height, 0))?;
-    class.define_method("height=", method!(Window::set_height, 1))?;
-
-    class.define_method("z", method!(Window::z, 0))?;
-    class.define_method("z=", method!(Window::set_z, 1))?;
-
-    class.define_method("back_opacity", method!(Window::back_opacity, 0))?;
-    class.define_method("back_opacity=", method!(Window::set_back_opacity, 1))?;
+    class.define_method("dispose", method!(Window::dispose, 0))?;
 
     Ok(())
 }

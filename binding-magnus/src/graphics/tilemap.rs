@@ -1,6 +1,6 @@
 use magnus::{Class, Module, Object, method, typed_data::Obj};
 
-use crate::data::RbTable;
+use crate::{bind_prop, data::RbTable, def_stubbed_prop};
 
 use super::{RbBitmap, RbViewport};
 
@@ -9,9 +9,19 @@ use super::{RbBitmap, RbViewport};
 pub struct Tilemap;
 
 impl Tilemap {
-    fn initialize(rb_self: Obj<Self>, viewport: &RbViewport) {}
+    fn initialize(rb_self: Obj<Self>, viewport: &RbViewport) -> magnus::error::Result<()> {
+        let ruby = magnus::Ruby::get_with(rb_self);
+        let ary = ruby.ary_from_iter(std::iter::repeat_n(ruby.qnil(), 7));
+        rb_self.ivar_set("autotiles", ary)?;
+
+        Ok(())
+    }
 
     fn update(&self) {}
+
+    fn autotiles(rb_self: Obj<Self>) -> magnus::error::Result<magnus::Value> {
+        rb_self.ivar_get("autotiles")
+    }
 
     fn tileset(rb_self: Obj<Self>) -> Result<magnus::Value, magnus::Error> {
         rb_self.ivar_get("tileset")
@@ -40,23 +50,11 @@ impl Tilemap {
         rb_self.ivar_set("priorities", table)
     }
 
-    fn wrapping(&self) -> bool {
-        false
-    }
+    def_stubbed_prop!(wrapping -> bool);
+    def_stubbed_prop!(ox -> i32);
+    def_stubbed_prop!(oy -> i32);
 
-    fn set_wrapping(&self, value: bool) {}
-
-    fn ox(&self) -> i32 {
-        0
-    }
-
-    fn set_ox(&self, offset: i32) {}
-
-    fn oy(&self) -> i32 {
-        0
-    }
-
-    fn set_oy(&self, offset: i32) {}
+    fn dispose(&self) {}
 }
 
 pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
@@ -67,23 +65,19 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
 
     class.define_method("update", method!(Tilemap::update, 0))?;
 
-    class.define_method("tileset", method!(Tilemap::tileset, 0))?;
-    class.define_method("tileset=", method!(Tilemap::set_tileset, 1))?;
+    class.define_method("autotiles", method!(Tilemap::autotiles, 0))?;
 
-    class.define_method("map_data", method!(Tilemap::map_data, 0))?;
-    class.define_method("map_data=", method!(Tilemap::set_map_data, 1))?;
+    bind_prop!(class.tileset = Tilemap::tileset, Tilemap::set_tileset);
+    bind_prop!(class.map_data = Tilemap::map_data, Tilemap::set_map_data);
+    bind_prop!(
+        class.priorities = Tilemap::priorities,
+        Tilemap::set_priorities
+    );
+    bind_prop!(class.wrapping = Tilemap::wrapping, Tilemap::set_wrapping);
+    bind_prop!(class.ox = Tilemap::ox, Tilemap::set_ox);
+    bind_prop!(class.oy = Tilemap::oy, Tilemap::set_oy);
 
-    class.define_method("priorities", method!(Tilemap::priorities, 0))?;
-    class.define_method("priorities=", method!(Tilemap::set_priorities, 1))?;
-
-    class.define_method("wrapping", method!(Tilemap::wrapping, 0))?;
-    class.define_method("wrapping=", method!(Tilemap::set_wrapping, 1))?;
-
-    class.define_method("ox", method!(Tilemap::ox, 0))?;
-    class.define_method("ox=", method!(Tilemap::set_ox, 1))?;
-
-    class.define_method("oy", method!(Tilemap::oy, 0))?;
-    class.define_method("oy=", method!(Tilemap::set_oy, 1))?;
+    class.define_method("dispose", method!(Tilemap::dispose, 0))?;
 
     Ok(())
 }

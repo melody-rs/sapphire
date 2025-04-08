@@ -11,6 +11,8 @@ mod tilemap;
 mod viewport;
 pub use viewport::Viewport as RbViewport;
 
+use crate::{bind_module_prop, def_stubbed_class_prop};
+
 mod window;
 
 static GRAPHICS: OnceLock<RwLock<rgss::Graphics>> = OnceLock::new();
@@ -19,31 +21,12 @@ pub fn get() -> &'static RwLock<rgss::Graphics> {
     GRAPHICS.get().unwrap()
 }
 
-fn fullscreen() -> bool {
-    false
-}
-
-fn set_fullscreen(fullscreen: bool) {}
-
-fn frame_rate() -> u16 {
-    60
-}
-
-fn set_frame_rate(framerate: u16) {}
-
-fn frame_count() -> u64 {
-    0
-}
-
-fn set_frame_count(count: u64) {}
+def_stubbed_class_prop!(fullscreen -> bool);
+def_stubbed_class_prop!(frame_rate: 60 -> u16);
+def_stubbed_class_prop!(frame_count -> u64);
+def_stubbed_class_prop!(frameskip -> bool);
 
 fn update() {}
-
-fn frameskip() -> bool {
-    false
-}
-
-fn set_frameskip(frameskip: bool) {}
 
 fn frame_reset() {}
 
@@ -74,17 +57,10 @@ pub fn bind(ruby: &magnus::Ruby, graphics: rgss::Graphics) -> magnus::error::Res
     module.define_module_function("frame_reset", function!(frame_reset, 0))?;
     module.define_module_function("transition", function!(transition, -1))?;
 
-    module.define_module_function("fullscreen", function!(fullscreen, 0))?;
-    module.define_module_function("fullscreen=", function!(set_fullscreen, 1))?;
-
-    module.define_module_function("frame_rate", function!(frame_rate, 0))?;
-    module.define_module_function("frame_rate=", function!(set_frame_rate, 1))?;
-
-    module.define_module_function("frame_count", function!(frame_count, 0))?;
-    module.define_module_function("frame_count=", function!(set_frame_count, 1))?;
-
-    module.define_module_function("frameskip", function!(frameskip, 0))?;
-    module.define_module_function("frameskip=", function!(set_frameskip, 1))?;
+    bind_module_prop!(module.fullscreen = fullscreen, set_fullscreen);
+    bind_module_prop!(module.frame_rate = frame_rate, set_frame_rate);
+    bind_module_prop!(module.frame_count = frame_count, set_frame_count);
+    bind_module_prop!(module.frameskip = frameskip, set_frameskip);
 
     Ok(())
 }

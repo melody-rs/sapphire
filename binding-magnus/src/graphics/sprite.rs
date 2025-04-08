@@ -3,8 +3,9 @@ use std::cell::Cell;
 
 use super::{RbBitmap, RbViewport};
 use crate::{
-    arenas,
+    AsKey, arenas, bind_prop,
     data::{RbRect, RbTone},
+    def_stubbed_prop,
 };
 
 #[derive(Default)]
@@ -15,15 +16,28 @@ impl Drop for Sprite {
     fn drop(&mut self) {
         let mut arenas = crate::arenas::get().write();
         if arenas.sprites.remove(self.0.get()).is_none() {
-            log::warn!("Sprite {:p} was drop'd twice!", self as *mut _)
+            log::warn!(
+                "Sprite {:p}:{:?} was drop'd twice!",
+                self as *mut _,
+                self.as_key()
+            )
         }
+    }
+}
+
+impl AsKey for Sprite {
+    type Key = rgss::SpriteKey;
+
+    fn as_key(&self) -> Self::Key {
+        self.0.get()
     }
 }
 
 impl Sprite {
     fn initialize(rb_self: Obj<Self>, args: &[magnus::Value]) -> Result<(), magnus::Error> {
         let args = magnus::scan_args::scan_args::<(), _, (), (), (), ()>(args)?;
-        let (viewport,): (Option<&RbViewport>,) = args.optional;
+        let (viewport,) = args.optional;
+        let viewport: Option<&RbViewport> = viewport.flatten();
 
         let mut arenas = arenas::get().write();
         let sprite = rgss::Sprite::new(&mut arenas);
@@ -70,83 +84,21 @@ impl Sprite {
 
     fn set_tone(rb_self: Obj<Self>, bitmap: Option<Obj<RbTone>>) {}
 
-    fn visible(&self) -> bool {
-        true
-    }
-
-    fn set_visible(&self, mirror: bool) {}
-
-    fn mirror(&self) -> bool {
-        false
-    }
-
-    fn set_mirror(&self, mirror: bool) {}
-
-    fn vmirror(&self) -> bool {
-        false
-    }
-
-    fn set_vmirror(&self, mirror: bool) {}
-
-    fn zoom_x(&self) -> f32 {
-        0.0
-    }
-
-    fn set_zoom_x(&self, zoom: f32) {}
-
-    fn zoom_y(&self) -> f32 {
-        0.0
-    }
-
-    fn set_zoom_y(&self, zoom: f32) {}
-
-    fn ox(&self) -> i32 {
-        0
-    }
-
-    fn set_ox(&self, offset: i32) {}
-
-    fn oy(&self) -> i32 {
-        0
-    }
-
-    fn set_oy(&self, offset: i32) {}
-
-    fn blend_type(&self) -> i32 {
-        0
-    }
-
-    fn set_blend_type(&self, offset: i32) {}
-
-    fn bush_depth(&self) -> i32 {
-        0
-    }
-
-    fn set_bush_depth(&self, offset: i32) {}
-
-    fn opacity(&self) -> i32 {
-        0
-    }
-
-    fn set_opacity(&self, opacity: i32) {}
-
-    fn x(&self) -> i32 {
-        0
-    }
-
-    fn set_x(&self, x: i32) {}
-
-    fn y(&self) -> i32 {
-        0
-    }
-
-    fn set_y(&self, y: i32) {}
-
-    fn z(&self) -> i32 {
-        0
-    }
-
-    fn set_z(&self, z: i32) {}
+    def_stubbed_prop!(visible -> bool);
+    def_stubbed_prop!(mirror -> bool);
+    def_stubbed_prop!(vmirror -> bool);
+    def_stubbed_prop!(zoom_x -> f32);
+    def_stubbed_prop!(zoom_y -> f32);
+    def_stubbed_prop!(angle -> f32);
+    def_stubbed_prop!(ox -> i32);
+    def_stubbed_prop!(oy -> i32);
+    def_stubbed_prop!(blend_type -> i32);
+    def_stubbed_prop!(pattern_blend_type -> i32);
+    def_stubbed_prop!(bush_depth -> i32);
+    def_stubbed_prop!(opacity -> i32);
+    def_stubbed_prop!(x -> i32);
+    def_stubbed_prop!(y -> i32);
+    def_stubbed_prop!(z -> i32);
 
     fn dispose(&self) {}
 }
@@ -171,44 +123,30 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
     class.define_method("tone", method!(Sprite::tone, 0))?;
     class.define_method("tone=", method!(Sprite::set_tone, 1))?;
 
-    class.define_method("visible", method!(Sprite::visible, 0))?;
-    class.define_method("visible=", method!(Sprite::set_visible, 1))?;
-
-    class.define_method("mirror", method!(Sprite::mirror, 0))?;
-    class.define_method("mirror=", method!(Sprite::set_mirror, 1))?;
-
-    class.define_method("vmirror", method!(Sprite::vmirror, 0))?;
-    class.define_method("vmirror=", method!(Sprite::set_vmirror, 1))?;
-
-    class.define_method("zoom_x", method!(Sprite::zoom_x, 0))?;
-    class.define_method("zoom_x=", method!(Sprite::set_zoom_x, 1))?;
-
-    class.define_method("zoom_y", method!(Sprite::zoom_y, 0))?;
-    class.define_method("zoom_y=", method!(Sprite::set_zoom_y, 1))?;
-
-    class.define_method("ox", method!(Sprite::ox, 0))?;
-    class.define_method("ox=", method!(Sprite::set_ox, 1))?;
-
-    class.define_method("oy", method!(Sprite::oy, 0))?;
-    class.define_method("oy=", method!(Sprite::set_oy, 1))?;
-
-    class.define_method("blend_type", method!(Sprite::blend_type, 0))?;
-    class.define_method("blend_type=", method!(Sprite::set_blend_type, 1))?;
-
-    class.define_method("bush_depth", method!(Sprite::bush_depth, 0))?;
-    class.define_method("bush_depth=", method!(Sprite::set_bush_depth, 1))?;
-
-    class.define_method("opacity", method!(Sprite::opacity, 0))?;
-    class.define_method("opacity=", method!(Sprite::set_opacity, 1))?;
-
-    class.define_method("x", method!(Sprite::x, 0))?;
-    class.define_method("x=", method!(Sprite::set_x, 1))?;
-
-    class.define_method("y", method!(Sprite::y, 0))?;
-    class.define_method("y=", method!(Sprite::set_y, 1))?;
-
-    class.define_method("z", method!(Sprite::z, 0))?;
-    class.define_method("z=", method!(Sprite::set_z, 1))?;
+    bind_prop!(class.visible = Sprite::visible, Sprite::set_visible);
+    bind_prop!(class.mirror = Sprite::mirror, Sprite::set_mirror);
+    bind_prop!(class.vmirror = Sprite::vmirror, Sprite::set_vmirror);
+    bind_prop!(class.zoom_x = Sprite::zoom_x, Sprite::set_zoom_x);
+    bind_prop!(class.zoom_y = Sprite::zoom_y, Sprite::set_zoom_y);
+    bind_prop!(class.angle = Sprite::angle, Sprite::set_angle);
+    bind_prop!(class.ox = Sprite::ox, Sprite::set_ox);
+    bind_prop!(class.oy = Sprite::oy, Sprite::set_oy);
+    bind_prop!(
+        class.blend_type = Sprite::blend_type,
+        Sprite::set_blend_type
+    );
+    bind_prop!(
+        class.pattern_blend_type = Sprite::pattern_blend_type,
+        Sprite::set_pattern_blend_type
+    );
+    bind_prop!(
+        class.bush_depth = Sprite::bush_depth,
+        Sprite::set_bush_depth
+    );
+    bind_prop!(class.opacity = Sprite::opacity, Sprite::set_opacity);
+    bind_prop!(class.x = Sprite::x, Sprite::set_x);
+    bind_prop!(class.y = Sprite::y, Sprite::set_y);
+    bind_prop!(class.z = Sprite::z, Sprite::set_z);
 
     class.define_method("dispose", method!(Sprite::dispose, 0))?;
 

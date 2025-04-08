@@ -1,11 +1,10 @@
 use magnus::{
-    Class, Module, Object, TryConvert, TypedData, function, method, typed_data::Obj,
-    value::ReprValue,
+    Class, Module, Object, TryConvert, TypedData, method, typed_data::Obj, value::ReprValue,
 };
 use parking_lot::RwLock;
 use std::{cell::Cell, sync::OnceLock};
 
-use crate::{arenas, data::RbColor};
+use crate::{AsKey, arenas, bind_class_prop, bind_prop, data::RbColor, def_val_prop};
 
 static FONTS: OnceLock<RwLock<rgss::Fonts>> = OnceLock::new();
 
@@ -21,11 +20,23 @@ impl Drop for Font {
     fn drop(&mut self) {
         let mut arenas = crate::arenas::get().write();
         if arenas.fonts.remove(self.0.get()).is_none() {
-            log::warn!("Font {:p} was drop'd twice!", self as *mut _)
+            log::warn!(
+                "Font {:p}:{:?} was drop'd twice!",
+                self as *mut _,
+                self.as_key()
+            )
         }
     }
 }
 
+impl AsKey for Font {
+    type Key = rgss::FontKey;
+    fn as_key(&self) -> Self::Key {
+        self.0.get()
+    }
+}
+
+// class fns
 impl Font {
     fn collect_names(value: magnus::Value) -> magnus::error::Result<Vec<String>> {
         let ruby = magnus::Ruby::get_with(value);
@@ -88,7 +99,10 @@ impl Font {
     fn set_default_shadow(shadow: bool) {
         get().write().default.shadow = shadow
     }
+}
 
+// methods
+impl Font {
     pub fn new_default(
         arenas: &mut rgss::Arenas,
         fonts: &rgss::Fonts,
@@ -144,6 +158,13 @@ impl Font {
         Ok(())
     }
 
+    def_val_prop!(size -> u32);
+    def_val_prop!(bold -> bool);
+    def_val_prop!(italic -> bool);
+    def_val_prop!(shadow -> bool);
+    def_val_prop!(outline -> bool);
+
+    // these are more complicated
     fn name(rb_self: Obj<Self>) -> magnus::error::Result<magnus::Value> {
         rb_self.ivar_get("name")
     }
@@ -152,40 +173,10 @@ impl Font {
         let mut arenas = arenas::get().write();
 
         let names = Self::collect_names(val)?;
-        arenas.fonts[rb_self.0.get()].names = names;
+        arenas[rb_self.as_key()].names = names;
         rb_self.ivar_set("name", val)?;
 
         Ok(())
-    }
-
-    fn size(&self) -> u32 {
-        let arenas = arenas::get().read();
-        arenas.fonts[self.0.get()].size
-    }
-
-    fn set_size(&self, val: u32) {
-        let mut arenas = arenas::get().write();
-        arenas.fonts[self.0.get()].size = val;
-    }
-
-    fn bold(&self) -> bool {
-        let arenas = arenas::get().read();
-        arenas.fonts[self.0.get()].bold
-    }
-
-    fn set_bold(&self, val: bool) {
-        let mut arenas = arenas::get().write();
-        arenas.fonts[self.0.get()].bold = val;
-    }
-
-    fn italic(&self) -> bool {
-        let arenas = arenas::get().read();
-        arenas.fonts[self.0.get()].italic
-    }
-
-    fn set_italic(&self, val: bool) {
-        let mut arenas = arenas::get().write();
-        arenas.fonts[self.0.get()].italic = val;
     }
 
     fn color(rb_self: Obj<Self>) -> magnus::error::Result<magnus::Value> {
@@ -194,28 +185,8 @@ impl Font {
 
     fn set_color(&self, val: &RbColor) {
         let mut arenas = arenas::get().write();
-        let color = arenas.fonts[self.0.get()].color;
-        arenas.colors[color] = arenas.colors[val.0.get()];
-    }
-
-    fn shadow(&self) -> bool {
-        let arenas = arenas::get().read();
-        arenas.fonts[self.0.get()].shadow
-    }
-
-    fn set_shadow(&self, val: bool) {
-        let mut arenas = arenas::get().write();
-        arenas.fonts[self.0.get()].shadow = val;
-    }
-
-    fn outline(&self) -> bool {
-        let arenas = arenas::get().read();
-        arenas.fonts[self.0.get()].outline
-    }
-
-    fn set_outline(&self, val: bool) {
-        let mut arenas = arenas::get().write();
-        arenas.fonts[self.0.get()].outline = val;
+        let color = arenas[self.as_key()].color;
+        arenas[color] = arenas[val.as_key()];
     }
 
     fn out_color(rb_self: Obj<Self>) -> magnus::error::Result<magnus::Value> {
@@ -224,8 +195,8 @@ impl Font {
 
     fn set_out_color(&self, val: &RbColor) {
         let mut arenas = arenas::get().write();
-        let out_color = arenas.fonts[self.0.get()].out_color;
-        arenas.colors[out_color] = arenas.colors[val.0.get()];
+        let out_color = arenas[self.as_key()].out_color;
+        arenas[out_color] = arenas[val.as_key()];
     }
 }
 
@@ -241,38 +212,27 @@ pub fn bind(ruby: &magnus::Ruby, fonts: rgss::Fonts) -> magnus::error::Result<()
 
     Font::initialize_class_vars(class)?;
 
+    // this one is special
     class.define_singleton_method("default_name", method!(Font::default_name, 0))?;
     class.define_singleton_method("default_name=", method!(Font::set_default_name, 1))?;
 
-    class.define_singleton_method("default_size", function!(Font::default_size, 0))?;
-    class.define_singleton_method("default_size=", function!(Font::set_default_size, 1))?;
+    bind_class_prop!(
+        class.default_size = Font::default_size,
+        Font::set_default_size
+    );
+    bind_class_prop!(
+        class.default_shadow = Font::default_shadow,
+        Font::set_default_shadow
+    );
 
-    class.define_singleton_method("default_shadow", function!(Font::default_shadow, 0))?;
-    class.define_singleton_method("default_shadow=", function!(Font::set_default_shadow, 1))?;
-
-    class.define_method("name", method!(Font::name, 0))?;
-    class.define_method("name=", method!(Font::set_name, 1))?;
-
-    class.define_method("size", method!(Font::size, 0))?;
-    class.define_method("size=", method!(Font::set_size, 1))?;
-
-    class.define_method("bold", method!(Font::bold, 0))?;
-    class.define_method("bold=", method!(Font::set_bold, 1))?;
-
-    class.define_method("italic", method!(Font::italic, 0))?;
-    class.define_method("italic=", method!(Font::set_italic, 1))?;
-
-    class.define_method("color", method!(Font::color, 0))?;
-    class.define_method("color=", method!(Font::set_color, 1))?;
-
-    class.define_method("shadow", method!(Font::shadow, 0))?;
-    class.define_method("shadow=", method!(Font::set_shadow, 1))?;
-
-    class.define_method("outline", method!(Font::outline, 0))?;
-    class.define_method("outline=", method!(Font::set_outline, 1))?;
-
-    class.define_method("out_color", method!(Font::out_color, 0))?;
-    class.define_method("out_color=", method!(Font::set_out_color, 1))?;
+    bind_prop!(class.name = Font::name, Font::set_name);
+    bind_prop!(class.size = Font::size, Font::set_size);
+    bind_prop!(class.bold = Font::bold, Font::set_bold);
+    bind_prop!(class.italic = Font::italic, Font::set_italic);
+    bind_prop!(class.color = Font::color, Font::set_color);
+    bind_prop!(class.shadow = Font::shadow, Font::set_shadow);
+    bind_prop!(class.outline = Font::outline, Font::set_outline);
+    bind_prop!(class.out_color = Font::out_color, Font::set_out_color);
 
     Ok(())
 }

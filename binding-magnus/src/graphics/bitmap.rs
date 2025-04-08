@@ -2,7 +2,7 @@ use magnus::{Class, Module, Object, TryConvert, Value, method, typed_data::Obj};
 use std::cell::Cell;
 
 use crate::{
-    RbFont, arenas,
+    AsKey, RbFont, arenas,
     data::{RbColor, RbRect},
     filesystem, font, graphics,
 };
@@ -15,8 +15,20 @@ impl Drop for Bitmap {
     fn drop(&mut self) {
         let mut arenas = crate::arenas::get().write();
         if arenas.bitmaps.remove(self.0.get()).is_none() {
-            log::warn!("Bitmap {:p} was drop'd twice!", self as *mut _)
+            log::warn!(
+                "Bitmap {:p}:{:?} was drop'd twice!",
+                self as *mut _,
+                self.as_key()
+            )
         }
+    }
+}
+
+impl AsKey for Bitmap {
+    type Key = rgss::BitmapKey;
+
+    fn as_key(&self) -> Self::Key {
+        self.0.get()
     }
 }
 
@@ -57,12 +69,12 @@ impl Bitmap {
 
     fn width(&self) -> u32 {
         let arenas = arenas::get().read();
-        arenas.bitmaps[self.0.get()].width()
+        arenas[self.as_key()].width()
     }
 
     fn height(&self) -> u32 {
         let arenas = arenas::get().read();
-        arenas.bitmaps[self.0.get()].height()
+        arenas[self.as_key()].height()
     }
 
     fn clear(&self) {}
@@ -151,6 +163,35 @@ impl Bitmap {
 
         Ok(())
     }
+
+    fn text_size(&self, text: String) -> RbRect {
+        let mut arenas = arenas::get().write();
+
+        let width = text.len() as u32 * 12;
+        let height = 12;
+        RbRect::new(&mut arenas, 0, 0, width, height)
+    }
+
+    fn draw_text(&self, args: &[Value]) -> magnus::error::Result<()> {
+        magnus::scan_args::check_arity(args.len(), 2..=3)?;
+
+        match *args {
+            [rect, string] => {
+                let rb_rect: &RbRect = TryConvert::try_convert(rect)?;
+                let string: String = TryConvert::try_convert(string)?;
+            }
+            [rect, string, align] => {
+                let rb_rect: &RbRect = TryConvert::try_convert(rect)?;
+                let string: String = TryConvert::try_convert(string)?;
+                let align: i32 = TryConvert::try_convert(align)?;
+            }
+            _ => unreachable!(),
+        }
+
+        Ok(())
+    }
+
+    fn hue_change(&self, hue: i32) {}
 }
 
 pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
@@ -172,6 +213,11 @@ pub fn bind(ruby: &magnus::Ruby) -> magnus::error::Result<()> {
 
     class.define_method("dispose", method!(Bitmap::dispose, 0))?;
     class.define_method("disposed?", method!(Bitmap::disposed, 0))?;
+
+    class.define_method("text_size", method!(Bitmap::text_size, 1))?;
+    class.define_method("draw_text", method!(Bitmap::draw_text, -1))?;
+
+    class.define_method("hue_change", method!(Bitmap::hue_change, 1))?;
 
     Ok(())
 }

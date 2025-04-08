@@ -12,6 +12,10 @@ pub fn get() -> &'static RwLock<rgss::Audio> {
 
 fn stub(_: &[Value]) {}
 
+fn pos_stub() -> f32 {
+    0.0
+}
+
 pub fn bind(ruby: &magnus::Ruby, audio: rgss::Audio) -> magnus::error::Result<()> {
     if AUDIO.set(RwLock::new(audio)).is_err() {
         eprintln!("audio static already set! this is not supposed to happen");
@@ -23,10 +27,12 @@ pub fn bind(ruby: &magnus::Ruby, audio: rgss::Audio) -> magnus::error::Result<()
     module.define_module_function("bgm_play", function!(stub, -1))?;
     module.define_module_function("bgm_stop", function!(stub, -1))?;
     module.define_module_function("bgm_fade", function!(stub, -1))?;
+    module.define_module_function("bgm_pos", function!(stub, -1))?;
 
     module.define_module_function("bgs_play", function!(stub, -1))?;
     module.define_module_function("bgs_stop", function!(stub, -1))?;
     module.define_module_function("bgs_fade", function!(stub, -1))?;
+    module.define_module_function("bgs_pos", function!(stub, -1))?;
 
     module.define_module_function("me_play", function!(stub, -1))?;
     module.define_module_function("me_stop", function!(stub, -1))?;
