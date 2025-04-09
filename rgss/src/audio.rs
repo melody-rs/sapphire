@@ -152,6 +152,14 @@ impl Audio {
         }
     }
 
+    pub fn bgm_pos(&self) -> f64 {
+        self.bgm
+            .sound
+            .as_ref()
+            .map(|s| s.sound_handle.position())
+            .unwrap_or_default()
+    }
+
     pub fn bgs_play(&mut self, filesystem: &FileSystem, opts: PlayOptions) {
         if opts.name.is_empty() {
             self.bgs_stop();
@@ -188,6 +196,14 @@ impl Audio {
         if let Some(mut sound) = self.bgs.sound.take() {
             sound.sound_handle.stop(kira::Tween::default());
         }
+    }
+
+    pub fn bgs_pos(&self) -> f64 {
+        self.bgs
+            .sound
+            .as_ref()
+            .map(|s| s.sound_handle.position())
+            .unwrap_or_default()
     }
 
     pub fn se_play(&mut self, filesystem: &FileSystem, opts: PlayOptions) {

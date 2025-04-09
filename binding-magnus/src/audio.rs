@@ -36,6 +36,11 @@ fn bgm_stop() {
     audio.bgm_stop();
 }
 
+fn bgm_pos() -> f64 {
+    let audio = get().lock();
+    audio.bgm_pos()
+}
+
 fn bgs_play(args: &[Value]) -> magnus::error::Result<()> {
     let args = magnus::scan_args::scan_args::<_, _, (), (), (), ()>(args)?;
     let (name,): (String,) = args.required;
@@ -58,6 +63,11 @@ fn bgs_play(args: &[Value]) -> magnus::error::Result<()> {
 fn bgs_stop() {
     let mut audio = get().lock();
     audio.bgs_stop();
+}
+
+fn bgs_pos() -> f64 {
+    let audio = get().lock();
+    audio.bgs_pos()
 }
 
 fn se_play(args: &[Value]) -> magnus::error::Result<()> {
@@ -86,10 +96,6 @@ fn se_stop() {
 
 fn stub(_: &[Value]) {}
 
-fn pos_stub() -> f32 {
-    0.0
-}
-
 pub fn bind(ruby: &magnus::Ruby, audio: rgss::Audio) -> magnus::error::Result<()> {
     if AUDIO.set(Mutex::new(audio)).is_err() {
         eprintln!("audio static already set! this is not supposed to happen");
@@ -101,12 +107,12 @@ pub fn bind(ruby: &magnus::Ruby, audio: rgss::Audio) -> magnus::error::Result<()
     module.define_module_function("bgm_play", function!(bgm_play, -1))?;
     module.define_module_function("bgm_stop", function!(bgm_stop, 0))?;
     module.define_module_function("bgm_fade", function!(stub, -1))?;
-    module.define_module_function("bgm_pos", function!(stub, -1))?;
+    module.define_module_function("bgm_pos", function!(bgm_pos, 0))?;
 
     module.define_module_function("bgs_play", function!(bgs_play, -1))?;
     module.define_module_function("bgs_stop", function!(bgs_stop, 0))?;
     module.define_module_function("bgs_fade", function!(stub, -1))?;
-    module.define_module_function("bgs_pos", function!(stub, -1))?;
+    module.define_module_function("bgs_pos", function!(bgs_pos, 0))?;
 
     module.define_module_function("me_play", function!(stub, -1))?;
     module.define_module_function("me_stop", function!(stub, -1))?;
