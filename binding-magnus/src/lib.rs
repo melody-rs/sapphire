@@ -103,6 +103,7 @@ mod error;
 mod filesystem;
 mod font;
 mod graphics;
+mod gvl;
 mod input;
 mod modshot;
 mod oneshot;

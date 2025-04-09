@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration, time::Instant};
 
 use wgpu::PipelineCache;
 use winit::window::Window as NativeWindow;
@@ -33,12 +33,21 @@ use crate::{Arenas, Config, ViewportKey};
 pub struct Graphics {
     pub(crate) wgpu: Wgpu,
     pub(crate) pipeline_cache: Option<PipelineCache>,
+    bitmap_ops: wgpu::CommandEncoder,
+
+    last_frame: Instant,
+    pub frame_rate: u16,
+    pub frame_count: u64,
+
     pub global_viewport: ViewportKey,
 
     window: Arc<NativeWindow>,
 }
 
 pub(crate) const BITMAP_TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
+pub(crate) const BITMAP_OPS_DESC: wgpu::CommandEncoderDescriptor = wgpu::CommandEncoderDescriptor {
+    label: Some("sapphire bitmap operations"),
+};
 
 pub(crate) struct Wgpu {
     pub(crate) instance: wgpu::Instance,
@@ -105,18 +114,25 @@ impl Graphics {
             }
         }
 
+        let bitmap_ops = wgpu.device.create_command_encoder(&BITMAP_OPS_DESC);
+
         let viewport = Viewport::global(arenas);
         let global_viewport = arenas.viewports.insert(viewport);
 
         let this = Self {
             wgpu,
-            window,
             pipeline_cache,
 
-            global_viewport,
-        };
+            bitmap_ops,
 
-        this.render_first_frame();
+            last_frame: Instant::now(),
+            frame_rate: 40,
+            frame_count: 0,
+
+            global_viewport,
+
+            window,
+        };
 
         Ok(this)
     }
@@ -125,19 +141,33 @@ impl Graphics {
         &self.window
     }
 
-    fn render_first_frame(&self) {
+    pub fn update(&mut self) {
         let result = self.wgpu.surface.get_current_texture();
-
         let surface_texture = match result {
             Ok(t) => t,
+            Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                log::warn!("Failed to get current surface texture, reaquiring");
+                self.wgpu
+                    .surface
+                    .configure(&self.wgpu.device, &self.wgpu.surface_config);
+                return;
+            }
+            Err(wgpu::SurfaceError::OutOfMemory) => {
+                log::error!("Out of memory!");
+                std::process::abort();
+            }
             Err(e) => {
-                log::error!("Failed to render initial frame {e:}");
+                log::error!("Failed to get current surface texture: {e}");
                 return;
             }
         };
         let texture_view = surface_texture.texture.create_view(&Default::default());
 
-        let mut encoder = self.wgpu.device.create_command_encoder(&Default::default());
+        let new_bitmap_ops = self.wgpu.device.create_command_encoder(&BITMAP_OPS_DESC);
+        let bitmap_ops = std::mem::replace(&mut self.bitmap_ops, new_bitmap_ops);
+        let bitmap_ops_buf = bitmap_ops.finish();
+
+        let mut render_encoder = self.wgpu.device.create_command_encoder(&Default::default());
 
         let rpass_builder =
             RenderPassBuilder::new().with_color_attachment(wgpu::RenderPassColorAttachment {
@@ -150,14 +180,26 @@ impl Graphics {
             });
         let rpass_desc = rpass_builder.build();
 
-        let rpass = encoder.begin_render_pass(&rpass_desc);
+        let rpass = render_encoder.begin_render_pass(&rpass_desc);
         drop(rpass); // drop to finish it
 
-        let command_buffer = encoder.finish();
-        self.wgpu.queue.submit([command_buffer]);
+        let render_encoder_buf = render_encoder.finish();
+        self.wgpu.queue.submit([bitmap_ops_buf, render_encoder_buf]);
 
         self.window.pre_present_notify();
         surface_texture.present();
+
+        let now = Instant::now();
+        let frame_time = now.duration_since(self.last_frame);
+
+        // if the current time took less time to render than the the total frame time,
+        // then sleep for the leftover
+        let full_frame_time = Duration::from_secs_f32(1.0 / self.frame_rate as f32);
+        if let Some(sleep_time) = full_frame_time.checked_sub(frame_time) {
+            std::thread::sleep(sleep_time);
+        }
+        self.last_frame = Instant::now();
+        self.frame_count += 1;
     }
 }
 

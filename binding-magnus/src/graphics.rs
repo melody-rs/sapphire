@@ -11,7 +11,7 @@ mod tilemap;
 mod viewport;
 pub use viewport::Viewport as RbViewport;
 
-use crate::{bind_module_prop, def_stubbed_class_prop};
+use crate::{bind_module_prop, def_stubbed_class_prop, gvl::without_gvl};
 
 mod window;
 
@@ -21,12 +21,34 @@ pub fn get() -> &'static RwLock<rgss::Graphics> {
     GRAPHICS.get().unwrap()
 }
 
+fn frame_rate() -> u16 {
+    get().read().frame_rate
+}
+
+fn set_frame_rate(val: u16) {
+    get().write().frame_rate = val;
+}
+
+fn frame_count() -> u64 {
+    get().read().frame_count
+}
+
+fn set_frame_count(val: u64) {
+    get().write().frame_count = val;
+}
+
 def_stubbed_class_prop!(fullscreen -> bool);
-def_stubbed_class_prop!(frame_rate: 60 -> u16);
-def_stubbed_class_prop!(frame_count -> u64);
 def_stubbed_class_prop!(frameskip -> bool);
 
-fn update() {}
+fn update() {
+    let f = || {
+        let mut graphics = get().write();
+        graphics.update();
+    };
+    unsafe {
+        without_gvl(f);
+    }
+}
 
 fn frame_reset() {}
 
