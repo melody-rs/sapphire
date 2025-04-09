@@ -11,4 +11,4 @@ else
   git clone https://github.com/rbenv/ruby-build.git
 fi
 
-RUBY_CFLAGS="-Og -ggdb" RUBY_CONFIGURE_OPTS="--enable-install-static-library --enable-shared" ruby-build/bin/ruby-build "3.1.6" pfx/
+RUBY_CFLAGS="-Og -ggdb" RUBY_CONFIGURE_OPTS="--enable-install-static-library --enable-shared" ruby-build/bin/ruby-build --keep "3.1.6" pfx/
