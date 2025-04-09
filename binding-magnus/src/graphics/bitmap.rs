@@ -166,14 +166,59 @@ impl Bitmap {
 
     fn text_size(&self, text: String) -> RbRect {
         let mut arenas = arenas::get().write();
+        let mut fonts = font::get().write();
 
-        let width = text.len() as u32 * 12;
-        let height = 12;
-        RbRect::new(&mut arenas, 0, 0, width, height)
+        let rect = self.as_key().text_area(&arenas, &mut fonts, text);
+        let rect_key = arenas.rects.insert(rect);
+
+        rect_key.into()
     }
 
     fn draw_text(&self, args: &[Value]) -> magnus::error::Result<()> {
-        magnus::scan_args::check_arity(args.len(), 2..=5)?;
+        magnus::scan_args::check_arity(args.len(), 2..=6)?;
+
+        let arenas = arenas::get().read();
+        let mut fonts = font::get().write();
+        let mut graphics = graphics::get().write();
+
+        let rect;
+        let text;
+        let align_index;
+
+        match args.len() {
+            2..3 => {
+                let [rb_rect, rb_text, ..] = *args else {
+                    unreachable!()
+                };
+                let rb_rect: &RbRect = TryConvert::try_convert(rb_rect)?;
+                rect = arenas[rb_rect.as_key()];
+                text = String::try_convert(rb_text)?;
+                align_index = 3;
+            }
+            5..6 => {
+                let [x, y, w, h, rb_text, ..] = *args else {
+                    unreachable!()
+                };
+                let x = i32::try_convert(x)?;
+                let y = i32::try_convert(y)?;
+                let w = u32::try_convert(w)?;
+                let h = u32::try_convert(h)?;
+                text = String::try_convert(rb_text)?;
+
+                rect = rgss::Rect::new(x, y, w, h);
+                align_index = 6;
+            }
+            _ => unreachable!(),
+        }
+
+        let mut align = rgss::Align::default();
+        if let Some(&rb_align) = args.get(align_index) {
+            let align_raw: u8 = TryConvert::try_convert(rb_align)?;
+            align = rgss::Align::try_from(align_raw).unwrap();
+        }
+
+        self.as_key()
+            .draw_text(&arenas, &mut fonts, &mut graphics, rect, text, align);
 
         Ok(())
     }

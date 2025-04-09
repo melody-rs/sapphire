@@ -2,17 +2,17 @@ use crate::{Arenas, Color, ColorKey, FontKey, Graphics, graphics::BITMAP_TEXTURE
 
 pub struct Fonts {
     // cosmic text
-    font_system: glyphon::FontSystem,
-    swash_cache: glyphon::SwashCache,
+    pub(crate) font_system: glyphon::FontSystem,
+    pub(crate) swash_cache: glyphon::SwashCache,
 
-    cache: glyphon::Cache,
-    viewport: glyphon::Viewport,
-    atlas: glyphon::TextAtlas,
-    text_renderer: glyphon::TextRenderer,
+    pub(crate) cache: glyphon::Cache,
+    pub(crate) atlas: glyphon::TextAtlas,
+    pub(crate) text_renderer: glyphon::TextRenderer,
 
     pub default: Font,
 }
 
+#[derive(Debug)]
 // rather than storing colors directly, we store a key to them for garbage collection purposes
 pub struct Font {
     pub names: Vec<String>,
@@ -36,7 +36,6 @@ impl Fonts {
 
         // these are pretty expensive to construct, so we only do em once
         let cache = glyphon::Cache::new(&graphics.wgpu.device);
-        let viewport = glyphon::Viewport::new(&graphics.wgpu.device, &cache);
         let mut atlas = glyphon::TextAtlas::new(
             &graphics.wgpu.device,
             &graphics.wgpu.queue,
@@ -57,7 +56,6 @@ impl Fonts {
             swash_cache,
 
             cache,
-            viewport,
             atlas,
             text_renderer,
 

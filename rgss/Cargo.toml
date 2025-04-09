@@ -40,3 +40,5 @@ symphonia = "0.5.4"
 # replicates SDL behaviour and traps ctrlc
 trap_ctrlc = ["ctrlc"]
 trap_termination = ["ctrlc/termination"]
+force_x11 = []
+default = ["force_x11"]

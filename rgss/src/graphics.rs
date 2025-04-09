@@ -14,7 +14,7 @@ mod builders {
 use builders::*;
 
 mod bitmap;
-pub use bitmap::Bitmap;
+pub use bitmap::{Align, Bitmap};
 
 mod viewport;
 pub use viewport::Viewport;
@@ -38,6 +38,9 @@ pub struct Graphics {
     last_frame: Instant,
     pub frame_rate: u16,
     pub frame_count: u64,
+
+    #[cfg(debug_assertions)]
+    pub(crate) capture_frame: bool,
 
     pub global_viewport: ViewportKey,
 
@@ -129,6 +132,8 @@ impl Graphics {
             frame_rate: 40,
             frame_count: 0,
 
+            capture_frame: false,
+
             global_viewport,
 
             window,
@@ -162,6 +167,10 @@ impl Graphics {
             }
         };
         let texture_view = surface_texture.texture.create_view(&Default::default());
+
+        if self.capture_frame {
+            self.wgpu.device.start_capture();
+        }
 
         let new_bitmap_ops = self.wgpu.device.create_command_encoder(&BITMAP_OPS_DESC);
         let bitmap_ops = std::mem::replace(&mut self.bitmap_ops, new_bitmap_ops);
@@ -200,6 +209,11 @@ impl Graphics {
         }
         self.last_frame = Instant::now();
         self.frame_count += 1;
+
+        if self.capture_frame {
+            self.wgpu.device.stop_capture();
+        }
+        self.capture_frame = false;
     }
 }
 

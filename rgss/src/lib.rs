@@ -2,7 +2,7 @@ mod event_loop;
 pub use event_loop::{EventLoop, Events};
 
 mod graphics;
-pub use graphics::{Bitmap, Drawable, Graphics, Sprite, Viewport, Window};
+pub use graphics::{Align, Bitmap, Drawable, Graphics, Sprite, Viewport, Window};
 
 mod input;
 pub use input::{Input, KeyCode};

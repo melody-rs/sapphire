@@ -4,6 +4,9 @@ use winit::{
     event_loop::{ActiveEventLoop, EventLoopProxy},
 };
 
+#[cfg(unix)]
+use winit::platform::x11::EventLoopBuilderExtX11;
+
 pub struct EventLoop {
     event_loop: winit::event_loop::EventLoop<UserEvent>,
     event_send: Sender<Event>,
@@ -26,7 +29,12 @@ pub(crate) enum Event {
 impl EventLoop {
     /// Create a new event loop for processing events.
     pub fn new() -> Result<(Self, Events), EventLoopError> {
-        let event_loop = winit::event_loop::EventLoop::with_user_event().build()?;
+        let mut event_loop_builder = winit::event_loop::EventLoop::with_user_event();
+        #[cfg(all(unix, feature = "force_x11"))]
+        {
+            event_loop_builder.with_x11();
+        }
+        let event_loop = event_loop_builder.build()?;
         event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         let event_proxy = event_loop.create_proxy();
 
