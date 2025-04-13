@@ -1,0 +1,32 @@
+name: Autobuild
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+      # TODO cache ruby too
+      - name: Build ruby
+        run: cd ${{ github.workspace }}/ruby
+          ./build-ruby.sh
+      - name: Build sapphire
+        run: cargo build
+      - name: Setup artifact
+        run: |
+          mkdir -p ${{ github.workspace }}/artifact
+          cp ${{ github.workspace }}/target/debug/sapphire ${{ github.workspace }}/artifact
+          cp ruby/pfx/libruby.* artifact
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sapphire-linux
+          path: ${{ github.workspace }}/artifact/
