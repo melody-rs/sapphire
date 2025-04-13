@@ -16,7 +16,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
       # TODO cache ruby too
       - name: Build ruby
-        run: cd ${{ github.workspace }}/ruby
+        run: |
+          cd ${{ github.workspace }}/ruby
           ./build-ruby.sh
       - name: Build sapphire
         run: cargo build
