@@ -1,4 +1,5 @@
 use pollster::FutureExt;
+use rgss::Bindings;
 
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::new().default_filter_or("warn")).init();
@@ -95,7 +96,7 @@ fn main() {
             filesystem,
             fonts,
         };
-        binding_thread = Some(binding_magnus::start(ctx));
+        binding_thread = Some(binding_magnus::Magnus::start(ctx));
     });
 
     if let Err(e) = result {

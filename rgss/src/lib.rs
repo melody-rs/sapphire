@@ -119,3 +119,7 @@ where
         &mut T::slotmap_mut(self)[index]
     }
 }
+
+pub trait Bindings {
+    fn start(ctx: Ctx) -> std::thread::JoinHandle<()>;
+}
