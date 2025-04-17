@@ -2,6 +2,7 @@
 name = "binding-magnus"
 version = "0.1.0"
 edition = "2024"
+build = "build.rs"
 
 [dependencies]
 magnus = { version = "0.7.1", features = ["embed", "rb-sys"] }
