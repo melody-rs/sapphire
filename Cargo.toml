@@ -5,12 +5,12 @@ resolver = "3"
 [workspace.dependencies]
 winit = "0.30.9"
 gilrs = "0.11.0"
-wgpu = "24.0.1"
+wgpu = "25.0.0"
 
 kira = "0.10.4"
 
 image = "0.25.5"
-glyphon = "0.8.0"
+glyphon = "0.9.0"
 
 slotmap = "1.0.7"
 
