@@ -120,7 +120,7 @@ impl BitmapKey {
         text_buffer.set_text(
             &mut fonts.font_system,
             text.as_ref(),
-            glyphon::Attrs::new().family(glyphon::Family::Name(&font.names[0])),
+            &glyphon::Attrs::new().family(glyphon::Family::Name(&font.names[0])),
             glyphon::Shaping::Advanced,
         );
 
@@ -198,7 +198,7 @@ impl BitmapKey {
         text_buffer.set_text(
             &mut fonts.font_system,
             text.as_ref(),
-            glyphon::Attrs::new().family(glyphon::Family::Name(&font.names[0])),
+            &glyphon::Attrs::new().family(glyphon::Family::Name(&font.names[0])),
             glyphon::Shaping::Advanced,
         );
 

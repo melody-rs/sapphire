@@ -69,7 +69,7 @@ pub enum InitError {
     #[error("Failed to create surface: {0}")]
     SurfaceError(#[from] wgpu::CreateSurfaceError),
     #[error("Failed to find a suitable adapter")]
-    NoAdapter,
+    NoAdapter(#[from] wgpu::RequestAdapterError),
     #[error("Failed to request a device: {0}")]
     DeviceError(#[from] wgpu::RequestDeviceError),
 }
@@ -169,7 +169,7 @@ impl Graphics {
         let texture_view = surface_texture.texture.create_view(&Default::default());
 
         if self.capture_frame {
-            self.wgpu.device.start_capture();
+            unsafe { self.wgpu.device.start_graphics_debugger_capture() }
         }
 
         let new_bitmap_ops = self.wgpu.device.create_command_encoder(&BITMAP_OPS_DESC);
@@ -211,7 +211,7 @@ impl Graphics {
         self.frame_count += 1;
 
         if self.capture_frame {
-            self.wgpu.device.stop_capture();
+            unsafe { self.wgpu.device.stop_graphics_debugger_capture() };
         }
         self.capture_frame = false;
     }
@@ -237,16 +237,18 @@ impl Wgpu {
         let surface = instance.create_surface(window)?;
 
         let adapter = match wgpu::util::initialize_adapter_from_env(&instance, Some(&surface)) {
-            Some(env) => env,
-            None => instance
-                .request_adapter(&wgpu::RequestAdapterOptionsBase {
-                    power_preference: wgpu::PowerPreference::from_env()
-                        .unwrap_or(wgpu::PowerPreference::LowPower),
-                    force_fallback_adapter: false,
-                    compatible_surface: Some(&surface),
-                })
-                .await
-                .ok_or(InitError::NoAdapter)?,
+            Ok(env) => env,
+            Err(e) => {
+                log::error!("Failed to find adapter: {e}");
+                instance
+                    .request_adapter(&wgpu::RequestAdapterOptionsBase {
+                        power_preference: wgpu::PowerPreference::from_env()
+                            .unwrap_or(wgpu::PowerPreference::LowPower),
+                        force_fallback_adapter: false,
+                        compatible_surface: Some(&surface),
+                    })
+                    .await?
+            }
         };
 
         let needed_features = wgpu::Features::PUSH_CONSTANTS;
@@ -276,14 +278,11 @@ impl Wgpu {
             .expect("surface incompatible with adapter?");
 
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    required_features: features,
-                    required_limits: limits.clone(),
-                    ..Default::default()
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                required_features: features,
+                required_limits: limits.clone(),
+                ..Default::default()
+            })
             .await?;
 
         surface.configure(&device, &surface_config);
