@@ -9,11 +9,16 @@ fn set_title(title: String) {
 
 fn set_icon(icon: String) {}
 
+fn pos_supported() -> bool {
+    true
+}
+
 pub fn bind(ruby: &magnus::Ruby) -> Result<(), magnus::Error> {
     let module = ruby.define_module("ModWindow")?;
 
     module.define_module_function("SetTitle", function!(set_title, 1))?;
     module.define_module_function("SetIcon", function!(set_icon, 1))?;
+    module.define_module_function("pos_supported", function!(pos_supported, 0))?;
 
     Ok(())
 }

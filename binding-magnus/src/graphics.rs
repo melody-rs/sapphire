@@ -60,6 +60,8 @@ fn transition(args: &[magnus::Value]) -> Result<(), magnus::Error> {
     Ok(())
 }
 
+fn center() {}
+
 pub fn bind(ruby: &magnus::Ruby, graphics: rgss::Graphics) -> magnus::error::Result<()> {
     if GRAPHICS.set(RwLock::new(graphics)).is_err() {
         eprintln!("graphics static already set! this is not supposed to happen");
@@ -78,6 +80,7 @@ pub fn bind(ruby: &magnus::Ruby, graphics: rgss::Graphics) -> magnus::error::Res
     module.define_module_function("update", function!(update, 0))?;
     module.define_module_function("frame_reset", function!(frame_reset, 0))?;
     module.define_module_function("transition", function!(transition, -1))?;
+    module.define_module_function("center", function!(center, 0))?;
 
     bind_module_prop!(module.fullscreen = fullscreen, set_fullscreen);
     bind_module_prop!(module.frame_rate = frame_rate, set_frame_rate);
