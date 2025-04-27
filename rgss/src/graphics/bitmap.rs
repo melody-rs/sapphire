@@ -103,7 +103,6 @@ impl BitmapKey {
         text: impl AsRef<str>,
         align: Align,
     ) {
-        graphics.capture_frame = true;
         let this = &arenas[self];
         let font = &arenas[this.font];
         let color = arenas[font.color];

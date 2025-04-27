@@ -21,6 +21,7 @@ pub enum Error {
     ResourceLimitReached(#[from] kira::ResourceLimitReached),
 }
 
+#[derive(Debug)]
 pub struct PlayOptions {
     pub name: String,
     pub volume: Option<u32>,
@@ -90,10 +91,11 @@ impl PlayOptions {
         let normalized_amplitude = self.volume.map(|v| v as f32 / 100.0).unwrap_or(1.0);
         let amplitude = normalized_amplitude.min(1.0); // cap to 1.0. values larger than that would really mess with things
         // https://github.com/mkxp-z/mkxp-z/pull/208/files#diff-3216992fdc41349399a23a9468d6e272ba8382e89f63d2beebd0d477b468372eR174-R200
-        let rpg_maker_volume_scale = 10_f32.powf((amplitude - 1.0) * (35.0 / 20.0));
-        // is this more correct?
-        // kira::Decibels(rpg_maker_volume_scale.log10() * 24.0)
-        kira::Decibels(rpg_maker_volume_scale * 60.0 - 60.0)
+        // i can't get ANY of these to match what the pr says it should be
+        // let rpg_maker_volume_scale = 10_f32.powf((amplitude - 1.0) * (35.0 / 20.0));
+        // dbg!(kira::Decibels(rpg_maker_volume_scale * 60.0 - 60.0))
+        // dbg!(kira::Decibels(rpg_maker_volume_scale.log10() * 24.0))
+        dbg!(kira::Decibels(amplitude.log10() * 20.0))
     }
 }
 
