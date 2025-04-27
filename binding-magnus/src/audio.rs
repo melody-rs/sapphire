@@ -107,18 +107,22 @@ pub fn bind(ruby: &magnus::Ruby, audio: rgss::Audio) -> magnus::error::Result<()
     module.define_module_function("bgm_play", function!(bgm_play, -1))?;
     module.define_module_function("bgm_stop", function!(bgm_stop, 0))?;
     module.define_module_function("bgm_fade", function!(stub, -1))?;
+    module.define_module_function("bgm_set_al_effect", function!(stub, -1))?;
     module.define_module_function("bgm_pos", function!(bgm_pos, 0))?;
 
     module.define_module_function("bgs_play", function!(bgs_play, -1))?;
     module.define_module_function("bgs_stop", function!(bgs_stop, 0))?;
     module.define_module_function("bgs_fade", function!(stub, -1))?;
+    module.define_module_function("bgs_set_al_effect", function!(stub, -1))?;
     module.define_module_function("bgs_pos", function!(bgs_pos, 0))?;
 
     module.define_module_function("me_play", function!(stub, -1))?;
     module.define_module_function("me_stop", function!(stub, -1))?;
+    module.define_module_function("me_set_al_effect", function!(stub, -1))?;
     module.define_module_function("me_fade", function!(stub, -1))?;
 
     module.define_module_function("se_play", function!(se_play, -1))?;
+    module.define_module_function("se_set_al_effect", function!(stub, -1))?;
     module.define_module_function("se_stop", function!(se_stop, 0))?;
 
     module.define_module_function("ch_play", function!(stub, -1))?;

@@ -30,7 +30,7 @@ pub struct PlayOptions {
 
 struct Track {
     track_handle: kira::track::TrackHandle,
-    sound: Option<Sound>, // Sound is !Sync so it needs a mutex
+    sound: Option<Sound>, // Sound is !Sync, so this makes Audio !Sync (kinda annoying)
 }
 
 struct Sound {
@@ -87,10 +87,13 @@ impl PlayOptions {
     }
 
     fn volume_to_db(&self) -> kira::Decibels {
-        let amplitude = self.volume.map(|v| v as f32 / 100.0).unwrap_or(1.0);
-        // TODO (my hears hurt while figuring this one out lmao, so i need a break)
+        let normalized_amplitude = self.volume.map(|v| v as f32 / 100.0).unwrap_or(1.0);
+        let amplitude = normalized_amplitude.min(1.0); // cap to 1.0. values larger than that would really mess with things
         // https://github.com/mkxp-z/mkxp-z/pull/208/files#diff-3216992fdc41349399a23a9468d6e272ba8382e89f63d2beebd0d477b468372eR174-R200
-        kira::Decibels(amplitude.log10() * 4.0 / 7.0 + 1.0)
+        let rpg_maker_volume_scale = 10_f32.powf((amplitude - 1.0) * (35.0 / 20.0));
+        // is this more correct?
+        // kira::Decibels(rpg_maker_volume_scale.log10() * 24.0)
+        kira::Decibels(rpg_maker_volume_scale * 60.0 - 60.0)
     }
 }
 
